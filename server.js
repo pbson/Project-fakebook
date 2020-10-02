@@ -12,6 +12,7 @@ app.set("view engine", "ejs");
 
 const indexRouter = require('./api/routes/index')
 const userRouter = require('./api/routes/user')
+const uploadsRouter = require('./api/routes/uploads')
 
 const mongoose = require('mongoose')
 
@@ -23,5 +24,6 @@ db.on('open',() => console.log('Connected to mongoose'));
 
 app.use('/', indexRouter);
 app.use('/it4788/user', userRouter);
+app.use("/it4788/uploads", uploadsRouter);
 
 app.listen(process.env.PORT || 3000);

@@ -58,7 +58,8 @@ router.post("/signup", async (req, res) => {
       password: saltPassword,
       uuid: uuid,
       latestLoginTime: Date.now(),
-      locked: "0"
+      locked: "0",
+      avatar: req.headers.host + '/it4788/uploads/image/6121b696d5b99ae63c4f2c6db22a4ec7.png'
     });
 
     await user.save();
@@ -177,6 +178,7 @@ router.post("/login", async (req, res) => {
               id: user.id,
               phonenumber: user.phonenumber,
               token: token,
+              avatar: user.avatar
             },
           });
         }
