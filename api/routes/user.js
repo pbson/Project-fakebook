@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const mongoose = require('mongoose')
 
 const User = require("../../models/User");
 
@@ -268,8 +269,8 @@ router.post("/set_accept_friend", async (req, res) => {
                 _id: user.id,
               },
               {
-                $pull: { FriendsRequest: user_id },
-                $push: { ListFriends: user_id },
+                $pull: { FriendsRequest: mongoose.Types.ObjectId(user_id) },
+                $push: { ListFriends: mongoose.Types.ObjectId(user_id) },
               }
             );
 
@@ -278,12 +279,12 @@ router.post("/set_accept_friend", async (req, res) => {
                 _id: requestFriend.id,
               },
               {
-                $pull: { Req: user.id },
-                $push: { ListFriends: user.id },
+                $pull: { Req: mongoose.Types.ObjectId(user.id) },
+                $push: { ListFriends: mongoose.Types.ObjectId(user.id) },
               }
             );
             return res.json({
-              message: "Friend request's accepted",
+              message: "Friend request accepted",
               code: "1000",
             });
           //Remove request friend request isn't accepted
@@ -293,7 +294,7 @@ router.post("/set_accept_friend", async (req, res) => {
                 _id: user.id,
               },
               {
-                $pull: { FriendsRequest: user_id },
+                $pull: { FriendsRequest: mongoose.Types.ObjectId(user_id) },
               }
             );
 
@@ -302,11 +303,11 @@ router.post("/set_accept_friend", async (req, res) => {
                 _id: requestFriend.id,
               },
               {
-                $pull: { Req: user.id },
+                $pull: { Req: mongoose.Types.ObjectId(user.id) },
               }
             );
             return res.json({
-              message: "Friend request's denined",
+              message: "Friend request denined",
               code: "1000",
             });
           }
