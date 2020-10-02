@@ -8,12 +8,14 @@ const app = express()
 const bodyParser=require('body-parser');
 app.use(bodyParser.json());
 
+app.set("view engine", "ejs"); 
+
 const indexRouter = require('./api/routes/index')
 const userRouter = require('./api/routes/user')
 
 const mongoose = require('mongoose')
 
-mongoose.connect(process.env.DATABASE_URL, {useNewUrlParser: true, useUnifiedTopology: true})
+mongoose.connect(process.env.DATABASE_URL, {useNewUrlParser: true, useUnifiedTopology: true, useFindAndModify: false})
 
 const db = mongoose.connection
 db.on('error',error => console.log(error));
