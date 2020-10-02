@@ -129,9 +129,9 @@ router.post("/login", async (req, res) => {
       });
     }
     // Find user with request phone number
-    let user = await User.findOne({ phonenumber });
+    let user = await User.findOne({ phonenumber: phonenumber });
 
-    if (user.length === 0) {
+    if (!user) {
       return res.json({
         message: "Invalid credential",
         code: "1003",
@@ -318,8 +318,8 @@ router.post("/set_accept_friend", async (req, res) => {
     });
   } catch (error) {
     return res.json({
-      message: error,
-      code: "9996",
+      message: 'Server error',
+      code: "1001",
     });
   }
 });
