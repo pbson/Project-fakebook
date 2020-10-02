@@ -59,7 +59,7 @@ router.post("/signup", async (req, res) => {
       uuid: uuid,
       latestLoginTime: Date.now(),
       locked: "0",
-      avatar: req.headers.host + '/it4788/uploads/image/6121b696d5b99ae63c4f2c6db22a4ec7.png'
+      avatar: req.headers.host + '/it4788/uploads/image/19b64ad6ca7b090e6ab9a88bf5da42fb.png'
     });
 
     await user.save();
@@ -129,9 +129,9 @@ router.post("/login", async (req, res) => {
       });
     }
     // Find user with request phone number
-    let user = await User.findOne({ phonenumber });
+    let user = await User.findOne({ phonenumber: phonenumber });
 
-    if (user.length === 0) {
+    if (!user) {
       return res.json({
         message: "Invalid credential",
         code: "1003",
@@ -318,8 +318,8 @@ router.post("/set_accept_friend", async (req, res) => {
     });
   } catch (error) {
     return res.json({
-      message: error,
-      code: "9996",
+      message: 'Server error',
+      code: "1001",
     });
   }
 });
