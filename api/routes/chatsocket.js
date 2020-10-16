@@ -8,6 +8,10 @@ const Conversation = require("../../models/Conversation");
 const Message = require("../../models/Message");
 const User = require("../../models/User");
 
+router.get("/chat", (req,res) => {
+    res.render("chat");
+})
+
 router.post("/get_list_conversation", async(req, res) => {
     const token = req.query.token;
     try {
