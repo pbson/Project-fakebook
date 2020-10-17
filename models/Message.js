@@ -4,7 +4,10 @@ const messageSchema = mongoose.Schema({
 Sender:String,
 Receiver:String,
 Unread:Boolean,
-CreatedAt:Date,
+CreatedAt:{
+    type: Date,
+    dafault: Date.now
+},
 Content:String,
 IdConversation:String
 });
