@@ -265,7 +265,7 @@ socket.on('roomUsers', ({ room, users }) => {
 });
 
 // Message from server
-socket.on('message', message => {
+socket.on('onmessage', message => {
   console.log(message);
   outputMessage(message);
 
@@ -282,15 +282,16 @@ chatForm.addEventListener('submit', e => {
   
   msg = msg.trim();
   data ={}
-  data.conversation = conversation
-  data.userid= userid
-  data.message = msg 
+  data.IdConversation = conversation
+  data.Sender= userid
+  data.Content = msg 
+  data.Unread = true 
   if (!msg){
     return false;
   }
 
   // Emit message to server
-  socket.emit('chatMessage', data);
+  socket.emit('send', data);
 
   // Clear input
   e.target.elements.msg.value = '';
@@ -303,12 +304,12 @@ function outputMessage(message) {
   div.classList.add('message');
   const p = document.createElement('p');
   p.classList.add('meta');
-  p.innerText = message.username;
-  p.innerHTML += `<span>${message.time}</span>`;
+  p.innerText = message.Sender;
+  p.innerHTML += `<span>${new Date(message.CreatedAt).toLocaleTimeString()}</span>`;
   div.appendChild(p);
   const para = document.createElement('p');
   para.classList.add('text');
-  para.innerText = message.text;
+  para.innerText = message.Content;
   div.appendChild(para);
   document.querySelector('.chat-messages').appendChild(div);
 }

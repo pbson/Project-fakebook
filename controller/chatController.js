@@ -1,4 +1,5 @@
 const Message = require("../models/Message");
+const Conversation = require("../models/Conversation");
 const botName = 'ChatCord Bot';
 module.exports = (io) => {
     io.on("connection", async (socket) => {
@@ -10,12 +11,27 @@ module.exports = (io) => {
               users: userid
             });
           });
-        socket.on('chatMessage', data => {
-            message = {}
-            message.username = data.userid
-            message.text = data.message
-            message.time = "aaaa"
-            io.to(data.conversation).emit('message',message);
+          socket.on('send', async data => {
+            let conversation = await Conversation.findById({_id:data.IdConversation });
+            let receiver = conversation.MessageList.find(element => element !== data.Sender)
+
+            message = {
+              Receiver: receiver,
+              Sender: data.Sender,
+              Content: data.Content,
+              Unread: data.Unread,
+              IdConversation: data.IdConversation,
+              CreatedAt: Date.now()
+            }
+
+            try {
+              let newMessage = new Message(message);
+              await newMessage.save();
+            } catch (error) {
+              console.log(error);
+            }
+            
+            io.to(data.IdConversation).emit('onmessage',message);
           });
     });
 
