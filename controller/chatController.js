@@ -11,16 +11,39 @@ module.exports = (io) => {
                 "UserList.id": info.userid,
                 "UserList.id": info.partnerid,
             });
-            
-            socket.join(conversation);
+            if(conversation){
+                socket.join(conversation);
+            } else {
+                let newConversation = new Conversation();
+                newConversation.UserList[0]={id:info.userid}
+                newConversation.UserList[1]={id:info.partnerid}
+                newConversation.LastMessage=Date.now();
+                await newConversation.save();
+                socket.join(newConversation._id);
+            }
 
           });
-        socket.on('chatMessage', data => {
-            message = {}
-            message.username = data.userid
-            message.text = data.message
-            message.time = "aaaa"
-            io.to(data.conversation).emit('message',message);
+          socket.on('send', async data => {
+            let conversation = await Conversation.findById({_id:data.IdConversation });
+            let receiver = conversation.MessageList.find(element => element !== data.Sender)
+
+            message = {
+              Receiver: receiver,
+              Sender: data.Sender,
+              Content: data.Content,
+              Unread: data.Unread,
+              IdConversation: data.IdConversation,
+              CreatedAt: Date.now()
+            }
+
+            try {
+              let newMessage = new Message(message);
+              await newMessage.save();
+            } catch (error) {
+              console.log(error);
+            }
+            
+            io.to(data.IdConversation).emit('onmessage',message);
           });
         socket.on('deleteMessgae',async data=>{
             await Message.findOneAndDelete({_id:data.message_id},(err,docs)=>{

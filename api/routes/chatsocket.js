@@ -40,13 +40,13 @@ router.post("/get_list_conversation", async(req, res) => {
                             let countmess = 0;
                             let arrayConversations = await Conversation.find({
                                 "UserList.id": id,
-                            }).sort();
+                            }).sort({LastMessage:-1});
                             if(index&&count){
-                                let arrayConversation = arrayConversations.slice(index,count);
+                                 arrayConversation = arrayConversations.slice(index,count);
                             } else {
-                                let arrayConversation = arrayConversations.slice(0,19);
+                                 arrayConversation = arrayConversations.slice(0,19);
                             }
-                            for await (const conversation of arrayConversation) {
+                            for  (const conversation of arrayConversation) {
                                 let object = {};
                                 object.id = conversation._id;
                                 const userlist = conversation.UserList;
@@ -215,10 +215,7 @@ router.post("/a", async(req, res) => {
 });
 router.post("/b", async(req, res) => {
     const id = req.query.id;
-    const id1 = req.query.id1;
-    let a = await Conversation.findOne({ _id: id1 });
-    a.MessageList.push({ id: id });
-    a.save();
+    let a = await Conversation.findOneAndUpdate({ _id: id },{LastMessage : Date.now()});
     return res.json(a);
 });
 router.post("/set_read_message", (req, res) => {
