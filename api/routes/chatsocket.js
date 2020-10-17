@@ -241,16 +241,20 @@ router.post("/set_read_message", (req, res) => {
                                         _id: conversation_id,
                                     });
                                     if (conversation) {
-                                        // if(conversation.UserList[0].id!==id&&conversation.UserList[1].id!==id){
-                                        //     return res.json({
-                                        //         code: "1004",
-                                        //         message: "Conversation "
-                                        //     })
-                                        // }
-                                        return res.json({
-                                            code: "1000",
-                                            message: "OK",
-                                        });
+                                        await Message.updateMany({Receiver:id},{Unread:false},(err,doc)=>{
+                                            if(err){
+                                                return res.json({
+                                                    code : "1005",
+                                                    message : err
+                                                }) 
+                                            } else {
+                                                return res.json({
+                                                    code: "1000",
+                                                    message: "OK",
+                                                });
+                                            }
+                                        })
+
                                     } else {
                                         return res.json({
                                             code: "1004",
@@ -263,10 +267,19 @@ router.post("/set_read_message", (req, res) => {
                                         "UserList.id": partner_id,
                                     });
                                     if (conversation) {
-                                        return res.json({
-                                            code: "1000",
-                                            message: "OK",
-                                        });
+                                        await Message.updateMany({Receiver:id},{Unread:false},(err,doc)=>{
+                                            if(err){
+                                                return res.json({
+                                                    code : "1005",
+                                                    message : err
+                                                }) 
+                                            } else {
+                                                return res.json({
+                                                    code: "1000",
+                                                    message: "OK",
+                                                });
+                                            }
+                                        })
                                     } else {
                                         return res.json({
                                             code: "1004",

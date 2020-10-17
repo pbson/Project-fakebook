@@ -10,7 +10,7 @@ module.exports = (io) => {
               users: userid
             });
           });
-          socket.on('chatMessage', data => {
+        socket.on('chatMessage', data => {
             message = {}
             message.username = data.userid
             message.text = data.message
