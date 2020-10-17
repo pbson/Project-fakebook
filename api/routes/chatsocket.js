@@ -40,7 +40,7 @@ router.post('/get_list_conversation',async (req,res)=>{
                             }
                             const messagelist = conversation.MessageList
 
-                            const idlastmess = messagelist.pop().id;
+                            const idlastmess = mesoreachsagelist.pop().id;
                             let lastmess = await Message.findOne({_id:idlastmess});
                             object.LastMessage={
                                 message : lastmess.Content,
@@ -50,10 +50,8 @@ router.post('/get_list_conversation',async (req,res)=>{
                             if(lastmess.Unread==1){
                                 count = count +1
                             }
-                            console.log(object)
                             resarray.push(object);
                             count = count +1;
-                            console.log(count)
                         });
                         
                         return res.json({
