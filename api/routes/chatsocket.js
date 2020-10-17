@@ -183,18 +183,23 @@ router.post("/get_conversation", async(req, res) => {
                         let message = await Message.findOne({ _id: message_id }, { __v: 0, IdConversation: 0 });
                         if (!message) return;
                         else {
+                            let user = await User.findOne({ _id: userData.user.id });
+                            message = JSON.parse(JSON.stringify(message));
+                            message.avatar = user.avatar;
+                            message.phonenumber = user.phonenumber;
                             return message;
                         }
                     })
                 );
                 //Sort and filter null message
                 messageArray = messageArray.sort(function(a, b) {
-                    var dateA = new Date(a.CreatedAt),
-                        dateB = new Date(b.CreatedAt);
-                    return dateA - dateB;
+                    return a.CreatedAt > b.CreatedAt;
                 }).filter(message => {
                     return message !== undefined;
                 });
+                //Slice array by count and index
+                messageArray = messageArray.slice(index, index+count);
+                
                 return res.json({
                     message: "OK",
                     code: "1000",
