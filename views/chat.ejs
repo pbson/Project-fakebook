@@ -247,13 +247,16 @@ const roomName = document.getElementById('room-name');
 const userList = document.getElementById('users');
 
 // Get username and room from URL
-const { userid, conversation } = Qs.parse(location.search, {
+const { userid, partnerid } = Qs.parse(location.search, {
   ignoreQueryPrefix: true
 });
 const socket = io();
+let info= {}
+info.userid=userid
+info.partnerid=partnerid
 
 // Join chatroom
-socket.emit('joinChat', { userid, conversation });
+socket.emit('joinChat', info);
 
 // Get room and users
 socket.on('roomUsers', ({ room, users }) => {

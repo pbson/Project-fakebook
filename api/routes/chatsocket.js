@@ -14,6 +14,9 @@ router.get("/chat", (req,res) => {
 
 router.post("/get_list_conversation", async(req, res) => {
     const token = req.query.token;
+    const index = req.query.index;
+    const count = req.query.count;
+
     try {
         if (token) {
             jwt.verify(token, "secretToken", async(err, userData) => {
@@ -27,24 +30,33 @@ router.post("/get_list_conversation", async(req, res) => {
                     let user = await User.findOne({ _id: id });
                     if (user) {
                         if (token === user.token) {
+                            if (user.locked == 1) {
+                                return res.json({
+                                    code: "9995",
+                                    message: "You are  locked",
+                                });
+                            }
                             let resarray = [];
-                            let count = 0;
-                            let arrayConversation = await Conversation.find({
+                            let countmess = 0;
+                            let arrayConversations = await Conversation.find({
                                 "UserList.id": id,
-                            });
-                            arrayConversation.forEach(async(conversation) => {
+                            }).sort();
+                            if(index&&count){
+                                let arrayConversation = arrayConversations.slice(index,count);
+                            } else {
+                                let arrayConversation = arrayConversations.slice(0,19);
+                            }
+                            for await (const conversation of arrayConversation) {
                                 let object = {};
                                 object.id = conversation._id;
                                 const userlist = conversation.UserList;
-                                let idpartner =
-                                    userlist[0].id == id ? userlist[1].id : userlist[0].id;
+                                let idpartner = userlist[0].id == id ? userlist[1].id : userlist[0].id;
                                 let partner = await User.findOne({ _id: idpartner });
                                 object.Partner = {
                                     id: partner._id,
                                     avatar: partner.avatar,
                                 };
                                 const messagelist = conversation.MessageList;
-
                                 const idlastmess = messagelist.pop().id;
                                 let lastmess = await Message.findOne({ _id: idlastmess });
                                 object.LastMessage = {
@@ -52,20 +64,16 @@ router.post("/get_list_conversation", async(req, res) => {
                                     created: lastmess.CreatedAt,
                                     unread: lastmess.Unread,
                                 };
-                                if (lastmess.Unread == 1) {
-                                    count = count + 1;
+                                if (lastmess.Unread !== false) {
+                                    countmess = countmess + 1;
                                 }
-                                console.log(object);
                                 resarray.push(object);
-                                count = count + 1;
-                                console.log(count);
-                            });
-
+                            }
                             return res.json({
                                 code: "1000",
                                 message: "OK",
                                 data: resarray,
-                                numberNewMessage: count,
+                                numberNewMessage: countmess,
                             });
                         } else {
                             if (user.token === "" || user.token === null) {
