@@ -10,7 +10,7 @@ module.exports = (io) => {
 
             console.log(info)
             let conversation = await Conversation.findOne({
-                UserList: { $in: [info.userid, info.partnerid] },
+                UserList: { $all: [info.userid, info.partnerid] },
             });
             if (conversation) {
                 socket.join(conversation._id);
@@ -34,7 +34,7 @@ module.exports = (io) => {
         //Send event
         socket.on('send', async data => {
             let conversation = await Conversation.findOne({
-                UserList: { $in: [data.Sender, data.Receiver] },
+                UserList: { $all: [data.Sender, data.Receiver] },
             });
 
             message = {
