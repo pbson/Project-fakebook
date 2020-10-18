@@ -19,8 +19,8 @@ module.exports = (io) => {
                 });
             } else {
                 let newConversation = new Conversation();
-                newConversation.UserList[0] = { id: info.userid }
-                newConversation.UserList[1] = { id: info.partnerid }
+                newConversation.UserList.push(info.userid);
+                newConversation.UserList.push(info.partnerid);
                 newConversation.LastMessage = Date.now();
                 await newConversation.save();
                 socket.join(newConversation._id);
@@ -44,6 +44,7 @@ module.exports = (io) => {
                 IdConversation: conversation._id,
                 CreatedAt: Date.now()
             }
+            console.log(message);
             try {
                 let newMessage = new Message(message);
                 await newMessage.save();
