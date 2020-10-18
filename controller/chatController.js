@@ -50,20 +50,7 @@ module.exports = (io) => {
 
             io.to(conversation._id).emit('onmessage', message);
         });
-        //Delete mess event
-        socket.on('deleteMessgae', async data => {
-                await Message.findOneAndDelete({ _id: data.message_id }, (err, docs) => {
-                    if (err) {
-                        socket.emit('deleteMessageError', err)
-                    } else {
-                        socket.emit('deleteMessageSuccess', docs)
-                    }
-                });
-            })
-            
-<<<<<<< HEAD
-            io.to(data.IdConversation).emit('onmessage',message);
-          });
+
         socket.on('deleteMessgae',async data=>{
           let conversation = await Conversation.findOne({
             "UserList.id": data.userid,
@@ -72,14 +59,14 @@ module.exports = (io) => {
           if(conversation){
             await Message.findOneAndDelete({_id:data.message_id},(err,docs)=>{
               if(err){
-                  socket.in(conversation._id).emit('deleteMessageError',err)
+                  io.in(conversation._id).emit('deleteMessageError',err)
               } else {
-                  socket.in(conversation._id).emit('deleteMessageSuccess',docs)
+                  io.in(conversation._id).emit('deleteMessageSuccess',docs)
               }
           });
           }
 
-=======
+
         //Error handling event
         socket.on('reconnect', (attemptNumber) => {
             console.log(attemptNumber);
@@ -102,7 +89,7 @@ module.exports = (io) => {
         socket.on('error', (error) => {
             console.log(error);
         });
->>>>>>> Add error handling event, fix joinchat event  and refactor css
+
 
     });
 
