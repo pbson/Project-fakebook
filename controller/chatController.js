@@ -14,18 +14,22 @@ module.exports = (io) => {
             });
             if (conversation) {
                 socket.join(conversation._id);
+                io.to(conversation._id).emit('roomUsers', {
+                    room: conversation._id,
+                    users: 2
+                });
             } else {
                 let newConversation = new Conversation();
-                newConversation.UserList[0] = { id: info.userid }
-                newConversation.UserList[1] = { id: info.partnerid }
+                newConversation.UserList.push(info.userid);
+                newConversation.UserList.push(info.partnerid);
                 newConversation.LastMessage = Date.now();
                 await newConversation.save();
                 socket.join(newConversation._id);
+                io.to(newConversation._id).emit('roomUsers', {
+                    room: newConversation._id,
+                    users: 2
+                });
             }
-            io.to(conversation._id).emit('roomUsers', {
-                room: conversation._id,
-                users: 2
-            });
         });
         //Send event
         socket.on('send', async data => {
@@ -41,6 +45,7 @@ module.exports = (io) => {
                 IdConversation: conversation._id,
                 CreatedAt: Date.now()
             }
+            console.log(message);
             try {
                 let newMessage = new Message(message);
                 await newMessage.save();
@@ -63,7 +68,7 @@ module.exports = (io) => {
               } else {
                   io.to(conversation._id).emit('deleteMessageSuccess',docs)
               }
-          });
+          })
           }
         
         })
