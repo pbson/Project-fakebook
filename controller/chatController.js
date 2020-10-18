@@ -7,6 +7,7 @@ module.exports = (io) => {
     io.on("connection", async(socket) => {
         //Joinchat event
         socket.on('joinChat', async(info) => {
+          
             console.log(info)
             let conversation = await Conversation.findOne({
                 UserList: { $all: [info.userid, info.partnerid] },
