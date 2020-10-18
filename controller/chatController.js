@@ -13,6 +13,10 @@ module.exports = (io) => {
             });
             if (conversation) {
                 socket.join(conversation._id);
+                io.to(conversation._id).emit('roomUsers', {
+                    room: conversation._id,
+                    users: 2
+                });
             } else {
                 let newConversation = new Conversation();
                 newConversation.UserList[0] = { id: info.userid }
@@ -20,11 +24,11 @@ module.exports = (io) => {
                 newConversation.LastMessage = Date.now();
                 await newConversation.save();
                 socket.join(newConversation._id);
+                io.to(newConversation._id).emit('roomUsers', {
+                    room: conversation._id,
+                    users: 2
+                });
             }
-            io.to(conversation._id).emit('roomUsers', {
-                room: conversation._id,
-                users: 2
-            });
         });
         //Send event
         socket.on('send', async data => {
