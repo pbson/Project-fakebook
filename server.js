@@ -4,6 +4,7 @@ if (process.env.NODE_ENV !== 'production') {
 
 const express = require('express')
 const app = express()
+const server = require('http').createServer(app)
 
 const bodyParser=require('body-parser');
 app.use(bodyParser.json());
@@ -11,7 +12,7 @@ app.use(bodyParser.json());
 app.set("view engine", "ejs"); 
 app.use(express.static(__dirname + '/public/'));
 
-const server = app.listen(process.env.PORT || 3000);
+server.listen(process.env.PORT || 3000);
 io = require('socket.io')(server,{'pingTimeout':200000});
 
 const indexRouter = require('./api/routes/index')
