@@ -51,18 +51,18 @@ module.exports = (io) => {
             io.to(conversation._id).emit('onmessage', message);
         });
         socket.on('deleteMessgae',async data=>{
-          let conversation = await Conversation.findOne({
-            "UserList.id": data.userid,
-            "UserList.id": data.partnerid,
-        });
-          if(conversation){
-            await Message.findOneAndDelete({_id:data.message_id},(err,docs)=>{
-              if(err){
-                  io.in(conversation._id).emit('deleteMessageError',err)
-              } else {
-                  io.in(conversation._id).emit('deleteMessageSuccess',docs)
-              }
-          });
+        //   let conversation = await Conversation.findOne({
+        //     "UserList.id": data.userid,
+        //     "UserList.id": data.partnerid,
+        // });
+        //   if(conversation){
+        //     await Message.findOneAndDelete({_id:data.message_id},(err,docs)=>{
+        //       if(err){
+        //           io.in(conversation._id).emit('deleteMessageError',err)
+        //       } else {
+        //           io.in(conversation._id).emit('deleteMessageSuccess',docs)
+        //       }
+        //   });
           }
 
 
