@@ -62,7 +62,7 @@ module.exports = (io) => {
               } else {
                   io.to(conversation._id).emit('deleteMessageSuccess',docs)
               }
-          });
+          })
           }
         
         })
