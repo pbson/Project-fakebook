@@ -58,14 +58,14 @@ module.exports = (io) => {
           if(conversation){
             await Message.findOneAndDelete({_id:data.message_id},(err,docs)=>{
               if(err){
-                  io.in(conversation._id).emit('deleteMessageError',err)
+                  io.to(conversation._id).emit('deleteMessageError',err)
               } else {
-                  io.in(conversation._id).emit('deleteMessageSuccess',docs)
+                  io.to(conversation._id).emit('deleteMessageSuccess',docs)
               }
           });
           }
-
-
+        
+        })
         //Error handling event
 
         socket.on('reconnect', (attemptNumber) => {
@@ -91,4 +91,4 @@ module.exports = (io) => {
         });
     });
 
-};
+}
