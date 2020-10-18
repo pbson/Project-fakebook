@@ -39,7 +39,7 @@ router.post("/get_list_conversation", async(req, res) => {
                             let resarray = [];
                             let countmess = 0;
                             let arrayConversations = await Conversation.find({
-                                "UserList.id": id,
+                                UserList: { $in: [id] }
                             }).sort({ LastMessage: -1 });
                             if (index && count) {
                                 arrayConversation = arrayConversations.slice(index, count);
@@ -50,14 +50,14 @@ router.post("/get_list_conversation", async(req, res) => {
                                 let object = {};
                                 object.id = conversation._id;
                                 const userlist = conversation.UserList;
-                                let idpartner = userlist[0].id == id ? userlist[1].id : userlist[0].id;
+                                let idpartner = userlist[0]== id ? userlist[1] : userlist[0];
                                 let partner = await User.findOne({ _id: idpartner });
                                 object.Partner = {
                                     id: partner._id,
                                     avatar: partner.avatar,
                                 };
                                 const messagelist = conversation.MessageList;
-                                const idlastmess = messagelist.pop().id;
+                                const idlastmess = messagelist.pop();
                                 let lastmess = await Message.findOne({ _id: idlastmess });
                                 object.LastMessage = {
                                     message: lastmess.Content,
@@ -273,8 +273,7 @@ router.post("/set_read_message", (req, res) => {
                                     }
                                 } else if (partner_id) {
                                     let conversation = await Conversation.findOne({
-                                        "UserList.id": id,
-                                        "UserList.id": partner_id,
+                                        UserList: { $all: [id, partner_id] }
                                     });
                                     if (conversation) {
                                         await Message.updateMany({ Receiver: id }, { Unread: false }, (err, doc) => {
@@ -464,7 +463,7 @@ router.post("/delete_conversation", (req, res) => {
                                     if (conversation) {
                                         let messagelist = conversation.MessageList;
                                         messagelist.forEach(async(message) => {
-                                            await Message.findOneAndDelete({ _id: message.id });
+                                            await Message.findOneAndDelete({ _id: message });
                                         });
                                         await Conversation.findOneAndDelete({
                                             _id: conversation._id,
@@ -481,13 +480,12 @@ router.post("/delete_conversation", (req, res) => {
                                     }
                                 } else if (partner_id) {
                                     let conversation = await Conversation.findOne({
-                                        "UserList.id": id,
-                                        "UserList.id": partner_id,
+                                        UserList: { $all: [id,partner_id] }
                                     });
                                     if (conversation) {
                                         let messagelist = conversation.MessageList;
                                         messagelist.forEach(async(message) => {
-                                            await Message.findOneAndDelete({ _id: message.id });
+                                            await Message.findOneAndDelete({ _id: message });
                                         });
                                         await Conversation.findOneAndDelete({
                                             _id: conversation._id,
