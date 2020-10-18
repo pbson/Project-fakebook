@@ -174,7 +174,7 @@ router.post("/get_conversation", async(req, res) => {
                 //Get conversation_id if partner_id is passed
                 if (partner_id && !conversation_id) {
                     conversation = await Conversation.findOne({
-                        UserList: { $in: [user.id, partner_id] },
+                        UserList: { $all: [user.id, partner_id] },
                     });
                 }
                 // Create data array
@@ -405,7 +405,7 @@ router.post("/delete_message", async(req, res) => {
                 //Get conversation_id if partner_id is passed
                 if (partner_id && !conversation_id) {
                     conversation = await Conversation.findOne({
-                        UserList: { $in: [user.id, partner_id] },
+                        UserList: { $all: [user.id, partner_id] },
                     });
                     conversation_id = conversation.id;
                 }
