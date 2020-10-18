@@ -46,13 +46,20 @@ module.exports = (io) => {
             io.to(data.IdConversation).emit('onmessage',message);
           });
         socket.on('deleteMessgae',async data=>{
+          let conversation = await Conversation.findOne({
+            "UserList.id": data.userid,
+            "UserList.id": data.partnerid,
+        });
+          if(conversation){
             await Message.findOneAndDelete({_id:data.message_id},(err,docs)=>{
-                if(err){
-                    socket.emit('deleteMessageError',err)
-                } else {
-                    socket.emit('deleteMessageSuccess',docs)
-                }
-            });
+              if(err){
+                  socket.in(conversation._id).emit('deleteMessageError',err)
+              } else {
+                  socket.in(conversation._id).emit('deleteMessageSuccess',docs)
+              }
+          });
+          }
+
 
         })
         
