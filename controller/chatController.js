@@ -50,7 +50,6 @@ module.exports = (io) => {
 
             io.to(conversation._id).emit('onmessage', message);
         });
-
         socket.on('deleteMessgae',async data=>{
           let conversation = await Conversation.findOne({
             "UserList.id": data.userid,
@@ -68,6 +67,7 @@ module.exports = (io) => {
 
 
         //Error handling event
+
         socket.on('reconnect', (attemptNumber) => {
             console.log(attemptNumber);
         });
@@ -89,8 +89,6 @@ module.exports = (io) => {
         socket.on('error', (error) => {
             console.log(error);
         });
-
-
     });
 
 };
