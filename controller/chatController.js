@@ -4,45 +4,64 @@ const Message = require("../models/Message");
 const User = require("../models/User");
 const botName = 'ChatCord Bot';
 module.exports = (io) => {
-    io.on("connection", async (socket) => {
-        socket.on('joinChat', async (info) => {
+    io.on("connection", async(socket) => {
+        //Joinchat event
+        socket.on('joinChat', async(info) => {
             console.log(info)
             let conversation = await Conversation.findOne({
-                "UserList.id": info.userid,
-                "UserList.id": info.partnerid,
+                UserList: { $in: [info.userid, info.partnerid] },
             });
-            if(conversation){
-                socket.join(conversation);
+            if (conversation) {
+                socket.join(conversation._id);
             } else {
                 let newConversation = new Conversation();
-                newConversation.UserList[0]={id:info.userid}
-                newConversation.UserList[1]={id:info.partnerid}
-                newConversation.LastMessage=Date.now();
+                newConversation.UserList[0] = { id: info.userid }
+                newConversation.UserList[1] = { id: info.partnerid }
+                newConversation.LastMessage = Date.now();
                 await newConversation.save();
                 socket.join(newConversation._id);
             }
-
-          });
-          socket.on('send', async data => {
-            let conversation = await Conversation.findById({_id:data.IdConversation });
-            let receiver = conversation.MessageList.find(element => element !== data.Sender)
+            io.to(conversation._id).emit('roomUsers', {
+                room: conversation._id,
+                users: 2
+            });
+        });
+        //Send event
+        socket.on('send', async data => {
+            let conversation = await Conversation.findOne({
+                UserList: { $in: [data.Sender, data.Receiver] },
+            });
 
             message = {
-              Receiver: receiver,
-              Sender: data.Sender,
-              Content: data.Content,
-              Unread: data.Unread,
-              IdConversation: data.IdConversation,
-              CreatedAt: Date.now()
+                Receiver: data.Receiver,
+                Sender: data.Sender,
+                Content: data.Content,
+                Unread: data.Unread,
+                IdConversation: conversation._id,
+                CreatedAt: Date.now()
+            }
+            try {
+                let newMessage = new Message(message);
+                await newMessage.save();
+                await Conversation.findOneAndUpdate({ _id: conversation._id }, { $push: { MessageList: newMessage._id.toString() } });
+            } catch (error) {
+                console.log(error);
             }
 
-            try {
-              let newMessage = new Message(message);
-              await newMessage.save();
-            } catch (error) {
-              console.log(error);
-            }
+            io.to(conversation._id).emit('onmessage', message);
+        });
+        //Delete mess event
+        socket.on('deleteMessgae', async data => {
+                await Message.findOneAndDelete({ _id: data.message_id }, (err, docs) => {
+                    if (err) {
+                        socket.emit('deleteMessageError', err)
+                    } else {
+                        socket.emit('deleteMessageSuccess', docs)
+                    }
+                });
+            })
             
+<<<<<<< HEAD
             io.to(data.IdConversation).emit('onmessage',message);
           });
         socket.on('deleteMessgae',async data=>{
@@ -60,9 +79,31 @@ module.exports = (io) => {
           });
           }
 
+=======
+        //Error handling event
+        socket.on('reconnect', (attemptNumber) => {
+            console.log(attemptNumber);
+        });
+        socket.on('reconnecting', (attemptNumber) => {
+            console.log(attemptNumber);
+        });
+        socket.on('reconnect_error', (error) => {
+            console.log(error);
+        });
+        socket.on('reconnect_failed', () => {
+            console.log("Reconnect failed");
+        });
+        socket.on('connect_error', (error) => {
+            console.log(error);
+        });
+        socket.on('connect_timeout', (timeout) => {
+            console.log(timeout);
+        });
+        socket.on('error', (error) => {
+            console.log(error);
+        });
+>>>>>>> Add error handling event, fix joinchat event  and refactor css
 
-        })
-        
     });
 
 };

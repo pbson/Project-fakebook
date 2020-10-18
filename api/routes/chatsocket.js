@@ -8,7 +8,7 @@ const Conversation = require("../../models/Conversation");
 const Message = require("../../models/Message");
 const User = require("../../models/User");
 
-router.get("/chat", (req,res) => {
+router.get("/chat", (req, res) => {
     res.render("chat");
 })
 
@@ -40,13 +40,13 @@ router.post("/get_list_conversation", async(req, res) => {
                             let countmess = 0;
                             let arrayConversations = await Conversation.find({
                                 "UserList.id": id,
-                            }).sort({LastMessage:-1});
-                            if(index&&count){
-                                 arrayConversation = arrayConversations.slice(index,count);
+                            }).sort({ LastMessage: -1 });
+                            if (index && count) {
+                                arrayConversation = arrayConversations.slice(index, count);
                             } else {
-                                 arrayConversation = arrayConversations.slice(0,19);
+                                arrayConversation = arrayConversations.slice(0, 19);
                             }
-                            for  (const conversation of arrayConversation) {
+                            for (const conversation of arrayConversation) {
                                 let object = {};
                                 object.id = conversation._id;
                                 const userlist = conversation.UserList;
@@ -198,8 +198,8 @@ router.post("/get_conversation", async(req, res) => {
                     return message !== undefined;
                 });
                 //Slice array by count and index
-                messageArray = messageArray.slice(index, index+count);
-                
+                messageArray = messageArray.slice(index, index + count);
+
                 return res.json({
                     message: "OK",
                     code: "1000",
@@ -220,7 +220,7 @@ router.post("/a", async(req, res) => {
 });
 router.post("/b", async(req, res) => {
     const id = req.query.id;
-    let a = await Conversation.findOneAndUpdate({ _id: id },{LastMessage : Date.now()});
+    let a = await Conversation.findOneAndUpdate({ _id: id }, { LastMessage: Date.now() });
     return res.json(a);
 });
 router.post("/set_read_message", (req, res) => {
@@ -251,12 +251,12 @@ router.post("/set_read_message", (req, res) => {
                                         _id: conversation_id,
                                     });
                                     if (conversation) {
-                                        await Message.updateMany({Receiver:id},{Unread:false},(err,doc)=>{
-                                            if(err){
+                                        await Message.updateMany({ Receiver: id }, { Unread: false }, (err, doc) => {
+                                            if (err) {
                                                 return res.json({
-                                                    code : "1005",
-                                                    message : err
-                                                }) 
+                                                    code: "1005",
+                                                    message: err
+                                                })
                                             } else {
                                                 return res.json({
                                                     code: "1000",
@@ -277,12 +277,12 @@ router.post("/set_read_message", (req, res) => {
                                         "UserList.id": partner_id,
                                     });
                                     if (conversation) {
-                                        await Message.updateMany({Receiver:id},{Unread:false},(err,doc)=>{
-                                            if(err){
+                                        await Message.updateMany({ Receiver: id }, { Unread: false }, (err, doc) => {
+                                            if (err) {
                                                 return res.json({
-                                                    code : "1005",
-                                                    message : err
-                                                }) 
+                                                    code: "1005",
+                                                    message: err
+                                                })
                                             } else {
                                                 return res.json({
                                                     code: "1000",
