@@ -7,7 +7,7 @@ module.exports = (io) => {
     io.on("connection", async(socket) => {
         //Joinchat event
         socket.on('joinChat', async(info) => {
-          
+
             console.log(info)
             let conversation = await Conversation.findOne({
                 UserList: { $in: [info.userid, info.partnerid] },
@@ -57,10 +57,7 @@ module.exports = (io) => {
             io.to(conversation._id).emit('onmessage', message);
         });
         socket.on('deleteMessgae',async data=>{
-          let conversation = await Conversation.findOne({
-            "UserList.id": data.userid,
-            "UserList.id": data.partnerid,
-        });
+          let conversation = await Conversation.findOne({UserList: { $all: [data.userid, data.partnerid] }});
           if(conversation){
             await Message.findOneAndDelete({_id:data.message_id},(err,docs)=>{
               if(err){
