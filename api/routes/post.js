@@ -842,7 +842,79 @@ router.post("/add_post/", (req, res) => {
     }
   
   })
-  // set request friend 
-  
+//like
+router.post("/like", async (req, res) => {
+    const { token, id, index, count } = req.query;
+    try {
+        //Check if params are missing
+        if (Object.keys(req.query).length < 2 || !token || !id) {
+            return res.json({
+                message: "Missing field",
+                code: "1002",
+            });
+        }
+        // Check if id field is vaild
+        var post = await Post.findOne({ _id: id });
+        if (!post) {
+            return res.json({
+                message: "Wrong post_id or post doesn't exist",
+                code: "9992",
+            });
+        }
+        //Decode token to get user_id
+        jwt.verify(token, "secretToken", async(err, userData) => {
+            if (err) {
+                res.json({
+                    message: "Token is invalid",
+                    code: "9998",
+                });
+            } else {
+                let user = await User.findOne({ _id: userData.user.id });
+                //Search user with token provided
+                if (!user) {
+                    return res.json({
+                        message: "Can't find user with token provided",
+                        code: "9995",
+                    });
+                }
+                //Check if token match
+                if (user.token !== token) {
+                    return res.json({
+                        message: "Token is invalid",
+                        code: "9998",
+                    });
+                }
+                //Check if user is locked
+                if (user.locked == 1) {
+                    return res.json({
+                        message: "User is locked",
+                        code: "9995",
+                    });
+                }
+                 //Add like to post
+                try {
+                    let post = await Post.findOneAndUpdate({ _id: id }, {$inc : {'Like' : 1}}, {new: true});
+                    return res.json({
+                        message: 'OK',
+                        code: "1000",
+                        data: {
+                            like: post.Like
+                        }
+                    });
+                } catch (error) {
+                    return res.json({
+                        message: error,
+                        code: "1005",
+                    });
+                }
+            }
+        });
+    } catch (error) {
+        return res.json({
+            message: "Server error",
+            code: "1001",
+        });
+    }    
+});  
 
 module.exports = router;

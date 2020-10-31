@@ -21,6 +21,7 @@ var path = __dirname;
 const indexRouter = require('./api/routes/index')
 const userRouter = require('./api/routes/user')
 const postRouter = require('./api/routes/post')
+const commentRouter = require('./api/routes/comment')
 const uploadsRouter = require('./api/routes/uploads')
 const chatsocketRouter= require('./api/routes/chatsocket')
 const chatsocketController= require('./controller/chatController')(io)
@@ -35,6 +36,7 @@ db.on('open',() => console.log('Connected to mongoose'));
 app.use('/', indexRouter);
 app.use('/it4788/user', userRouter);
 app.use('/it4788/post', postRouter);
+app.use('/it4788/comment', commentRouter);
 app.use("/it4788/uploads", uploadsRouter);
 app.use("/it4788/chatsocket", chatsocketRouter);
 exports.path = path;
