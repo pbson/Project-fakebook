@@ -13,4 +13,4 @@ UpdatedAt: Date,
 Report : Array
 });
 
-module.exports = mongoose.model('Post',postSchema);
+module.exports = mongoose.model('Post',postSchema); 

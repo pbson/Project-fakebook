@@ -6,14 +6,21 @@ const express = require('express')
 const app = express()
 const server = require('http').createServer(app)
 const fileUpload = require('express-fileupload');
-
+const cloudinary = require('cloudinary').v2;
 const bodyParser=require('body-parser');
 app.use(bodyParser.json());
-app.use(fileUpload());
+app.use(fileUpload({
+  useTempFiles: true,
+  tempFileDir: '/tmp/'
+}));
 
 app.set("view engine", "ejs"); 
 app.use(express.static(__dirname + '/public/'));
-
+cloudinary.config({
+  cloud_name: "dfihy5b0d",
+  api_key: "991718769125956",
+  api_secret: "5V6qFI-4Epv2KRqL7Vbz-fbGSAI"
+});
 server.listen(process.env.PORT || 3000);
 io = require('socket.io')(server,{'pingTimeout':200000});
 var path = __dirname;
@@ -39,4 +46,3 @@ app.use('/it4788/post', postRouter);
 app.use('/it4788/comment', commentRouter);
 app.use("/it4788/uploads", uploadsRouter);
 app.use("/it4788/chatsocket", chatsocketRouter);
-exports.path = path;
