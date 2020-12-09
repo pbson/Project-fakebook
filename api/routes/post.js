@@ -749,7 +749,7 @@ router.post("/edit_post/", (req, res) => {
 })
 //like
 router.post("/like", async (req, res) => {
-    const { token, id, index, count } = req.query;
+    const { token, id } = req.query;
     try {
         //Check if params are missing
         if (Object.keys(req.query).length < 2 || !token || !id) {
@@ -798,12 +798,17 @@ router.post("/like", async (req, res) => {
                 }
                 //Add like to post
                 try {
-                    let post = await Post.findOneAndUpdate({ _id: id }, { $inc: { 'Like': 1 } }, { new: true });
+                    let post = await Post.findOne({ _id: id });
+                    if (post.Like.includes(user.id)){
+                        post = await Post.findOneAndUpdate({ _id: id }, { $pull: { Like: user.id } }, {new: true});
+                    }else{
+                        post = await Post.findOneAndUpdate({ _id: id }, { $push: { Like: user.id } }, {new: true});
+                    }
                     return res.json({
                         message: 'OK',
                         code: "1000",
                         data: {
-                            like: post.Like
+                            like: post.Like.length
                         }
                     });
                 } catch (error) {

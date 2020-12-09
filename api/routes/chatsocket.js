@@ -55,6 +55,7 @@ router.post("/get_list_conversation", async(req, res) => {
                                 object.Partner = {
                                     id: partner._id,
                                     avatar: partner.avatar,
+                                    phonenumber: partner.phonenumber
                                 };
                                 const messagelist = conversation.MessageList;
                                 const idlastmess = messagelist.pop();
