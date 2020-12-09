@@ -10,14 +10,9 @@ const server = require("../../server");
 
 router.post("/add_post/", (req, res) => {
     const token = req.query.token;
-    const image1 = req.files.image1;
-    const image2 = req.files.image2;
-    const image3 = req.files.image3;
-    const image4 = req.files.image4;
-    const imagethumb = req.files.imagethumb
-    const video = req.files.video;
     const described = req.query.described;
     const status = req.query.status
+    console.log(req.files)
     try {
         if (token) {
             jwt.verify(token, "secretToken", async (err, userData) => {
@@ -32,141 +27,147 @@ router.post("/add_post/", (req, res) => {
                     if (user) {
                         if (token === user.token) {
                             let post = new Post();
-
-                            if (video && imagethumb) {
-
-                                if (video.mimetype == "video/mp4" && (imagethumb.mimetype === "image/jpeg" || imagethumb.mimetype === "image/jpg" || imagethumb.mimetype === "image/png")) {
-                                    if (video.size < (10 * 1024 * 1024)) {
-                                        let videopath;
-                                        let paththumb;
-                                        await cloudinary.uploader.upload(video.tempFilePath, { resource_type: "video" }, (err, result) => {
-                                            if (err) {
-                                                return res.json({
-                                                    code: "1007",
-                                                    message: err,
+                            if (req.files !== undefined) {
+                                if (req.files.video !== undefined && req.files.imagethumb !== undefined) {
+                                    const imagethumb = req.files.imagethumb
+                                    const video = req.files.video;
+                                    if (video.mimetype == "video/mp4" && (imagethumb.mimetype === "image/jpeg" || imagethumb.mimetype === "image/jpg" || imagethumb.mimetype === "image/png")) {
+                                        if (video.size < (10 * 1024 * 1024)) {
+                                            let videopath;
+                                            let paththumb;
+                                            await cloudinary.uploader.upload(video.tempFilePath, { resource_type: "video" }, (err, result) => {
+                                                if (err) {
+                                                    return res.json({
+                                                        code: "1007",
+                                                        message: err,
+                                                    })
+                                                } else {
+                                                    videopath = result.url
+                                                }
+                                            })
+                                            if (imagethumb.size < 4 * 1024 * 1024) {
+                                                await cloudinary.uploader.upload(imagethumb.tempFilePath, (err, result) => {
+                                                    if (err) {
+                                                        return res.json({
+                                                            code: "1007",
+                                                            message: err,
+                                                        })
+                                                    } else {
+                                                        paththumb = result.url
+                                                    }
                                                 })
-                                            } else {
-                                                videopath = result.url
+                                                post.Video.push({ url: videopath, thumb: paththumb });
                                             }
-                                        })
-                                        if (imagethumb.size < 4 * 1024 * 1024) {
-                                            await cloudinary.uploader.upload(imagethumb.tempFilePath, (err, result) => {
-                                                if (err) {
-                                                    return res.json({
-                                                        code: "1007",
-                                                        message: err,
-                                                    })
-                                                } else {
-                                                    paththumb = result.url
-                                                }
-                                            })
-                                            post.Video.push({ url: videopath, thumb: paththumb });
-                                        }
-                                    } else {
-                                        return res.json({
-                                            code: "1006",
-                                            message: "Video size is too big"
-                                        })
-                                    }
-                                }
-                            } else {
-                                if (image1) {
-                                    if (image1.mimetype === "image/jpeg" || image1.mimetype === "image/jpg" || image1.mimetype === "image2/png") {
-                                        if (image1.size < (4 * 1024 * 1024)) {
-                                            let image1path;
-                                            await cloudinary.uploader.upload(image1.tempFilePath, (err, result) => {
-                                                if (err) {
-                                                    return res.json({
-                                                        code: "1007",
-                                                        message: err,
-                                                    })
-                                                } else {
-                                                    image1path = result.url
-                                                }
-                                            })
-
-                                            post.Image.push({ id: 1, url: image1path })
                                         } else {
                                             return res.json({
                                                 code: "1006",
-                                                message: "Image1 size is too big"
+                                                message: "Video size is too big"
                                             })
                                         }
-
                                     }
-                                }
-                                if (image2) {
-                                    if (image2.mimetype === "image/jpeg" || image2.mimetype === "image/jpg" || image2.mimetype === "image/png") {
-                                        if (image2.size < (4 * 1024 * 1024)) {
-                                            let image2path;
-                                            await cloudinary.uploader.upload(image2.tempFilePath, (err, result) => {
-                                                if (err) {
-                                                    return res.json({
-                                                        code: "1007",
-                                                        message: err,
-                                                    })
-                                                } else {
-                                                    image2path = result.url
-                                                }
-                                            })
-                                            post.Image.push({ id: 2, url: image2path })
-                                        } else {
-                                            return res.json({
-                                                code: "1006",
-                                                message: "Image size is too big"
-                                            })
-                                        }
+                                } else {
+                                    if (req.files.image1 !== undefined) {
+                                        const image1 = req.files.image1;
+                                        if (image1.mimetype === "image/jpeg" || image1.mimetype === "image/jpg" || image1.mimetype === "image2/png") {
+                                            if (image1.size < (4 * 1024 * 1024)) {
+                                                let image1path;
+                                                await cloudinary.uploader.upload(image1.tempFilePath, (err, result) => {
+                                                    if (err) {
+                                                        return res.json({
+                                                            code: "1007",
+                                                            message: err,
+                                                        })
+                                                    } else {
+                                                        image1path = result.url
+                                                    }
+                                                })
 
+                                                post.Image.push({ id: 1, url: image1path })
+                                            } else {
+                                                return res.json({
+                                                    code: "1006",
+                                                    message: "Image1 size is too big"
+                                                })
+                                            }
+
+                                        }
                                     }
-                                }
-                                if (image3) {
-                                    if (image3.mimetype === "image/jpeg" || image3.mimetype === "image/jpg" || image3.mimetype === "image/png") {
-                                        if (image3.size < (4 * 1024 * 1024)) {
-                                            let image3path;
-                                            await cloudinary.uploader.upload(image3.tempFilePath, (err, result) => {
-                                                if (err) {
-                                                    return res.json({
-                                                        code: "1007",
-                                                        message: err,
-                                                    })
-                                                } else {
-                                                    image3path = result.url
-                                                }
-                                            })
-                                            post.Image.push({ id: 3, url: image3path })
+                                    if (req.files.image2 !== undefined) {
+                                        const image2 = req.files.image2;
+                                        if (image2.mimetype === "image/jpeg" || image2.mimetype === "image/jpg" || image2.mimetype === "image/png") {
+                                            if (image2.size < (4 * 1024 * 1024)) {
+                                                let image2path;
+                                                await cloudinary.uploader.upload(image2.tempFilePath, (err, result) => {
+                                                    if (err) {
+                                                        return res.json({
+                                                            code: "1007",
+                                                            message: err,
+                                                        })
+                                                    } else {
+                                                        image2path = result.url
+                                                    }
+                                                })
+                                                post.Image.push({ id: 2, url: image2path })
+                                            } else {
+                                                return res.json({
+                                                    code: "1006",
+                                                    message: "Image size is too big"
+                                                })
+                                            }
 
-                                        } else {
-                                            return res.json({
-                                                code: "1006",
-                                                message: "Image size is too big"
-                                            })
                                         }
-
                                     }
-                                }
-                                if (image4) {
-                                    if (image4.mimetype === "image/jpeg" || image4.mimetype === "image/jpg" || image4.mimetype === "image/png") {
-                                        if (image4.size < (4 * 1024 * 1024)) {
-                                            let image4path;
-                                            await cloudinary.uploader.upload(image4.tempFilePath, (err, result) => {
-                                                if (err) {
-                                                    return res.json({
-                                                        code: "1007",
-                                                        message: err,
-                                                    })
-                                                } else {
-                                                    image4path = result.url
-                                                }
-                                            })
-                                            post.Image.push({ id: 4, url: image4path })
+                                    if (req.files.image3 !== undefined) {
+                                        const image3 = req.files.image3;
+                                        if (image3.mimetype === "image/jpeg" || image3.mimetype === "image/jpg" || image3.mimetype === "image/png") {
+                                            if (image3.size < (4 * 1024 * 1024)) {
+                                                let image3path;
+                                                await cloudinary.uploader.upload(image3.tempFilePath, (err, result) => {
+                                                    if (err) {
+                                                        return res.json({
+                                                            code: "1007",
+                                                            message: err,
+                                                        })
+                                                    } else {
+                                                        image3path = result.url
+                                                    }
+                                                })
+                                                post.Image.push({ id: 3, url: image3path })
 
-                                        } else {
-                                            return res.json({
-                                                code: "1006",
-                                                message: "Image size is too big"
-                                            })
+                                            } else {
+                                                return res.json({
+                                                    code: "1006",
+                                                    message: "Image size is too big"
+                                                })
+                                            }
+
                                         }
+                                    }
+                                    if (req.files.image4 !== undefined) {
+                                        const image4 = req.files.image4;
+                                        if (image4.mimetype === "image/jpeg" || image4.mimetype === "image/jpg" || image4.mimetype === "image/png") {
+                                            if (image4.size < (4 * 1024 * 1024)) {
+                                                let image4path;
+                                                await cloudinary.uploader.upload(image4.tempFilePath, (err, result) => {
+                                                    if (err) {
+                                                        return res.json({
+                                                            code: "1007",
+                                                            message: err,
+                                                        })
+                                                    } else {
+                                                        image4path = result.url
+                                                    }
+                                                })
+                                                post.Image.push({ id: 4, url: image4path })
 
+                                            } else {
+                                                return res.json({
+                                                    code: "1006",
+                                                    message: "Image size is too big"
+                                                })
+                                            }
+
+                                        }
                                     }
                                 }
                             }
@@ -238,7 +239,7 @@ router.post("/get_post/", (req, res) => {
                     let user = await User.findOne({ _id: userData.user.id })
                     if (user) {
                         if (token === user.token) {
-                            let post = await Post.findOne({ _id: id }) 
+                            let post = await Post.findOne({ _id: id })
                             if (post) {
                                 let data = {}
                                 data.id = post._id
@@ -507,16 +508,8 @@ router.post("/report_post/", (req, res) => {
 
 
 router.post("/edit_post/", (req, res) => {
-    const path = server.path
-
     const id = req.query.id;
     const token = req.query.token;
-    const image1 = req.files.image1;
-    const image2 = req.files.image2;
-    const image3 = req.files.image3;
-    const image4 = req.files.image4;
-    const imagethumb = req.files.imagethumb
-    const video = req.files.video;
     const described = req.query.described;
     const status = req.query.status
     try {
@@ -533,7 +526,8 @@ router.post("/edit_post/", (req, res) => {
                     if (user) {
                         if (token === user.token) {
                             let post = await Post.findOne({ _id: id })
-                            console.log(post)
+                            post.Image = [];
+                            post.Video = [];
                             if (post) {
                                 if (user._id == post.User_id) {
                                     if (user.locked == 1) {
@@ -544,141 +538,149 @@ router.post("/edit_post/", (req, res) => {
                                     } else {
                                         post.Described = described
                                         post.Status = status
-                                        if (video && imagethumb) {
-                                            if (video.mimetype == "video/mp4" && (imagethumb.mimetype === "image/jpeg" || imagethumb.mimetype === "image/jpg" || imagethumb.mimetype === "image/png")) {
-                                                if (video.size < (10 * 1024 * 1024)) {
-                                                    let videopath;
-                                                    let paththumb;
-                                                    await cloudinary.uploader.upload(video.tempFilePath, { resource_type: "video" }, (err, result) => {
-                                                        if (err) {
-                                                            return res.json({
-                                                                code: "1007",
-                                                                message: err,
+                                        if (req.files !== undefined) {
+                                            if (req.files.video !== undefined && req.files.imagethumb !== undefined) {
+                                                const video = req.files.video;
+                                                const imagethumb = req.files.imagethumb;
+                                                if (video.mimetype == "video/mp4" && (imagethumb.mimetype === "image/jpeg" || imagethumb.mimetype === "image/jpg" || imagethumb.mimetype === "image/png")) {
+                                                    if (video.size < (10 * 1024 * 1024)) {
+                                                        let videopath;
+                                                        let paththumb;
+                                                        await cloudinary.uploader.upload(video.tempFilePath, { resource_type: "video" }, (err, result) => {
+                                                            if (err) {
+                                                                return res.json({
+                                                                    code: "1007",
+                                                                    message: err,
+                                                                })
+                                                            } else {
+                                                                videopath = result.url
+                                                            }
+                                                        })
+                                                        if (imagethumb.size < 4 * 1024 * 1024) {
+                                                            await cloudinary.uploader.upload(imagethumb.tempFilePath, (err, result) => {
+                                                                if (err) {
+                                                                    return res.json({
+                                                                        code: "1007",
+                                                                        message: err,
+                                                                    })
+                                                                } else {
+                                                                    paththumb = result.url
+                                                                }
                                                             })
-                                                        } else {
-                                                            videopath = result.url
+                                                            post.Video[0] = { url: videopath, thumb: paththumb }
                                                         }
-                                                    })
-                                                    if (imagethumb.size < 4 * 1024 * 1024) {
-                                                        await cloudinary.uploader.upload(imagethumb.tempFilePath, (err, result) => {
-                                                            if (err) {
-                                                                return res.json({
-                                                                    code: "1007",
-                                                                    message: err,
-                                                                })
-                                                            } else {
-                                                                paththumb = result.url
-                                                            }
-                                                        })
-                                                        post.Video[0] = { url: videopath, thumb: paththumb }
-                                                    }
-                                                    post.Image = [];
-                                                } else {
-                                                    return res.json({
-                                                        code: "1006",
-                                                        message: "Video size is too big"
-                                                    })
-                                                }
-                                            }
-                                        } else {
-                                            if (image1) {
-                                                if (image1.mimetype === "image/jpeg" || image1.mimetype === "image/jpg" || image1.mimetype === "image2/png") {
-                                                    if (image1.size < (4 * 1024 * 1024)) {
-                                                        let image1path;
-                                                        await cloudinary.uploader.upload(image1.tempFilePath, (err, result) => {
-                                                            if (err) {
-                                                                return res.json({
-                                                                    code: "1007",
-                                                                    message: err,
-                                                                })
-                                                            } else {
-                                                                image1path = result.url
-                                                            }
-                                                        })
-
-                                                        post.Image[0] = { id: 1, url: image1path }
+                                                        post.Image = [];
                                                     } else {
                                                         return res.json({
                                                             code: "1006",
-                                                            message: "Image1 size is too big"
+                                                            message: "Video size is too big"
                                                         })
                                                     }
-                                                    post.Video = []
                                                 }
-                                            }
-                                            if (image2) {
-                                                if (image2.mimetype === "image/jpeg" || image2.mimetype === "image/jpg" || image2.mimetype === "image/png") {
-                                                    if (image2.size < (4 * 1024 * 1024)) {
-                                                        let image2path;
-                                                        await cloudinary.uploader.upload(image2.tempFilePath, (err, result) => {
-                                                            if (err) {
-                                                                return res.json({
-                                                                    code: "1007",
-                                                                    message: err,
-                                                                })
-                                                            } else {
-                                                                image2path = result.url
-                                                            }
-                                                        })
-                                                        post.Image[1] = { id: 2, url: image2path }
+                                            } else {
+                                                if (req.files.image1 !== undefined) {
+                                                    const image1 = req.files.image1;
+                                                    if (image1.mimetype === "image/jpeg" || image1.mimetype === "image/jpg" || image1.mimetype === "image2/png") {
+                                                        if (image1.size < (4 * 1024 * 1024)) {
+                                                            let image1path;
+                                                            await cloudinary.uploader.upload(image1.tempFilePath, (err, result) => {
+                                                                if (err) {
+                                                                    return res.json({
+                                                                        code: "1007",
+                                                                        message: err,
+                                                                    })
+                                                                } else {
+                                                                    image1path = result.url
+                                                                }
+                                                            })
 
-                                                    } else {
-                                                        return res.json({
-                                                            code: "1006",
-                                                            message: "Image size is too big"
-                                                        })
+                                                            post.Image[0] = { id: 1, url: image1path }
+                                                        } else {
+                                                            return res.json({
+                                                                code: "1006",
+                                                                message: "Image1 size is too big"
+                                                            })
+                                                        }
+                                                        post.Video = []
                                                     }
-                                                    post.Video = []
                                                 }
-                                            }
-                                            if (image3) {
-                                                if (image3.mimetype === "image/jpeg" || image3.mimetype === "image/jpg" || image3.mimetype === "image/png") {
-                                                    if (image3.size < (4 * 1024 * 1024)) {
-                                                        let image3path;
-                                                        await cloudinary.uploader.upload(image3.tempFilePath, (err, result) => {
-                                                            if (err) {
-                                                                return res.json({
-                                                                    code: "1007",
-                                                                    message: err,
-                                                                })
-                                                            } else {
-                                                                image3path = result.url
-                                                            }
-                                                        })
-                                                        post.Image[2] = { id: 3, url: image3path }
+                                                if (req.files.image2 !== undefined) {
+                                                    const image2 = req.files.image2;
+                                                    if (image2.mimetype === "image/jpeg" || image2.mimetype === "image/jpg" || image2.mimetype === "image/png") {
+                                                        if (image2.size < (4 * 1024 * 1024)) {
+                                                            let image2path;
+                                                            await cloudinary.uploader.upload(image2.tempFilePath, (err, result) => {
+                                                                if (err) {
+                                                                    return res.json({
+                                                                        code: "1007",
+                                                                        message: err,
+                                                                    })
+                                                                } else {
+                                                                    image2path = result.url
+                                                                }
+                                                            })
+                                                            post.Image[1] = { id: 2, url: image2path }
 
-                                                    } else {
-                                                        return res.json({
-                                                            code: "1006",
-                                                            message: "Image size is too big"
-                                                        })
+                                                        } else {
+                                                            return res.json({
+                                                                code: "1006",
+                                                                message: "Image size is too big"
+                                                            })
+                                                        }
+                                                        post.Video = []
                                                     }
-                                                    post.Video = []
                                                 }
-                                            }
-                                            if (image4) {
-                                                if (image4.mimetype === "image/jpeg" || image4.mimetype === "image/jpg" || image4.mimetype === "image/png") {
-                                                    if (image4.size < (4 * 1024 * 1024)) {
-                                                        let image4path;
-                                                        await cloudinary.uploader.upload(image4.tempFilePath, (err, result) => {
-                                                            if (err) {
-                                                                return res.json({
-                                                                    code: "1007",
-                                                                    message: err,
-                                                                })
-                                                            } else {
-                                                                image4path = result.url
-                                                            }
-                                                        })
-                                                        post.Image[3] = { id: 4, url: image4path }
+                                                if (req.files.image3 !== undefined) {
+                                                    const image3 = req.files.image3;
+                                                    if (image3.mimetype === "image/jpeg" || image3.mimetype === "image/jpg" || image3.mimetype === "image/png") {
+                                                        if (image3.size < (4 * 1024 * 1024)) {
+                                                            let image3path;
+                                                            await cloudinary.uploader.upload(image3.tempFilePath, (err, result) => {
+                                                                if (err) {
+                                                                    return res.json({
+                                                                        code: "1007",
+                                                                        message: err,
+                                                                    })
+                                                                } else {
+                                                                    image3path = result.url
+                                                                }
+                                                            })
+                                                            post.Image[2] = { id: 3, url: image3path }
 
-                                                    } else {
-                                                        return res.json({
-                                                            code: "1006",
-                                                            message: "Image size is too big"
-                                                        })
+                                                        } else {
+                                                            return res.json({
+                                                                code: "1006",
+                                                                message: "Image size is too big"
+                                                            })
+                                                        }
+                                                        post.Video = []
                                                     }
-                                                    post.Video = []
+                                                }
+                                                if (req.files.image4 !== undefined) {
+                                                    const image4 = req.files.image4;
+                                                    if (image4.mimetype === "image/jpeg" || image4.mimetype === "image/jpg" || image4.mimetype === "image/png") {
+                                                        if (image4.size < (4 * 1024 * 1024)) {
+                                                            let image4path;
+                                                            await cloudinary.uploader.upload(image4.tempFilePath, (err, result) => {
+                                                                if (err) {
+                                                                    return res.json({
+                                                                        code: "1007",
+                                                                        message: err,
+                                                                    })
+                                                                } else {
+                                                                    image4path = result.url
+                                                                }
+                                                            })
+                                                            post.Image[3] = { id: 4, url: image4path }
+
+                                                        } else {
+                                                            return res.json({
+                                                                code: "1006",
+                                                                message: "Image size is too big"
+                                                            })
+                                                        }
+                                                        post.Video = []
+                                                    }
                                                 }
                                             }
                                         }
@@ -820,4 +822,7 @@ router.post("/like", async (req, res) => {
     }
 });
 
+//get listt post
+
+route.post("/get_list_post/")
 module.exports = router;
