@@ -799,10 +799,10 @@ router.post("/like", async (req, res) => {
                 //Add like to post
                 try {
                     let post = await Post.findOne({ _id: id });
-                    if (post.Like.includes(user.id)){
-                        post = await Post.findOneAndUpdate({ _id: id }, { $pull: { Like: user.id } }, {new: true});
-                    }else{
-                        post = await Post.findOneAndUpdate({ _id: id }, { $push: { Like: user.id } }, {new: true});
+                    if (post.Like.includes(user.id)) {
+                        post = await Post.findOneAndUpdate({ _id: id }, { $pull: { Like: user.id } }, { new: true });
+                    } else {
+                        post = await Post.findOneAndUpdate({ _id: id }, { $push: { Like: user.id } }, { new: true });
                     }
                     return res.json({
                         message: 'OK',
@@ -829,5 +829,120 @@ router.post("/like", async (req, res) => {
 
 //get listt post
 
-route.post("/get_list_post/")
+// route.post("/get_list_post/")
+router.post("/get_list_post/", (req, res) => {
+    const token = req.query.token;
+    const last_id = req.query.last_id;
+    const index = req.query.index;
+    const count = req.query.count;
+    try {
+        if (token) {
+            jwt.verify(token, "secretToken", async (err, userData) => {
+                if (err) {
+                    res.json({
+                        code: "1004s",
+                        message: "Parameter value is invalid token"
+                    });
+                } else {
+                    const id = userData.user.id
+                    let user = await User.findOne({ _id: id })
+                    if (user) {
+                        if (token === user.token) {
+                            if (user.locked == 1) {
+                                return res.json({
+                                    code: "9995",
+                                    message: "You are  locked",
+                                });
+                            }
+                            let post = await Post.find({
+                                User_id: { $in: user.ListFriends }
+                            }).sort({ CreatedAt: 1 })
+                            let last_post = post.findIndex(p => p._id == last_id)
+                            let post_slice = post.splice(last_post+1, count)
+                            let posts =await Promise.all(post_slice.map(async post => {
+                                let r_post = {}
+                                r_post.id = post._id
+                                r_post.described = post.Described
+                                r_post.status = post.Status
+                                r_post.created = post.CreatedAt.toUTCString() 
+                                r_post.modified = post.UpdatedAt
+                                r_post.like = post.Like.length
+                                r_post.comment = post.Comment.length
+                                if (post.Like.find(element => element == user._id)) {
+                                    r_post.is_liked = 1;
+                                } else {
+                                    r_post.is_liked = 0;
+                                } 
+                                r_post.image = post.Image
+                                r_post.video = post.Video
+                                if (user._id = post.User_id) {
+                                    r_post.can_edit = 1;
+                                } else {
+                                    r_post.can_edit = 0;
+                                } 
+                                let user1 = await User.findOne({ _id: post.User_id })
+                                if (user1) { 
+                                    r_post.author = {
+                                        id: user1._id,
+                                        name: user1.phonenumber,
+                                        avatar: user1.avatar,
+                                    }
+                                    if (user1.locked) {
+                                        r_post.can_comment = 0
+                                    } else {
+                                        r_post.can_comment = 1
+                                    }
+                                } 
+                                return r_post;
+                            }));
+                            const l = post_slice.length;
+                            let last_id_1 = post_slice[l-1]._id
+                            let data = {};
+                            data.post = posts; aster
+                            data.last_id = last_id_1 
+                            return res.json({
+                                code: "1000",
+                                message : "Ok",
+                                data : data,  
+                            }) 
+                        } else { 
+                            if (user.token === "" || user.token === null) {
+                                return res.json({
+                                    code: "1004",
+                                    message: "User don't have token in db"
+                                })
+                            } else {
+                                return res.json({
+                                    code: "1004",
+                                    message: "Token is invalid"
+                                })
+                            }
+
+                        }
+                    } else {
+                        return res.json({
+                            code: "9995",
+                            message: "Don't find user by token"
+                        })
+                    }
+                }
+            });
+        } else {
+            return res.json(
+                {
+                    code: "1002",
+                    message: "No have Token"
+                }
+            )
+        }
+    } catch (error) {
+        return res.json({
+            code: "1005",
+            message: error
+        })
+    }
+
+})
+
+
 module.exports = router;
