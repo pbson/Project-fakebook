@@ -4,22 +4,67 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const mongoose = require("mongoose");
 
+
+const Notification = require('../../push_notification/send')
+const newCommentNotification = Notification.newMessageNotification;
+const getUserDeviceToken = Notification.getUserDeviceToken;
+
 const Conversation = require("../../models/Conversation");
 const Message = require("../../models/Message");
 const User = require("../../models/User");
+const { newMessageNotification } = require("../../push_notification/send");
 
 router.get("/chat", (req, res) => {
     res.render("chat");
 })
 
-router.post("/get_list_conversation", async(req, res) => {
+router.post("set_message", async (req, res) => {
+    const { receiverId, senderId, content, isUnread } = req.query;
+
+    let conversation = await Conversation.findOne({
+        UserList: { $all: [senderId, receiverId] },
+    });
+
+    message = {
+        Receiver: receiverId,
+        Sender: senderId,
+        Content: content,
+        Unread: isUnread,
+        IdConversation: conversation._id,
+        CreatedAt: Date.now()
+    }
+
+    try {
+        let newMessage = new Message(message);
+        await newMessage.save();
+        await Conversation.findOneAndUpdate({ _id: conversation._id }, { $push: { MessageList: newMessage._id.toString() } });
+
+        //send push notification
+        const deviceToken = await getUserDeviceToken(receiverId);
+        newMessageNotification(deviceToken, user.phonenumber, conversation._id)
+
+        return res.json({
+            message: "OK",
+            code: "1000",
+            data: message,
+        });
+    } catch (error) {
+        console.log(error);
+        return res.json({
+            message: "Server error",
+            code: "1001",
+        });
+    }
+})
+
+router.post("/get_list_conversation", async (req, res) => {
     const token = req.query.token;
     const index = req.query.index;
     const count = req.query.count;
 
     try {
         if (token) {
-            jwt.verify(token, "secretToken", async(err, userData) => {
+            jwt.verify(token, "secretToken", async (err, userData) => {
                 if (err) {
                     res.json({
                         code: "1004",
@@ -50,7 +95,7 @@ router.post("/get_list_conversation", async(req, res) => {
                                 let object = {};
                                 object.id = conversation._id;
                                 const userlist = conversation.UserList;
-                                let idpartner = userlist[0]== id ? userlist[1] : userlist[0];
+                                let idpartner = userlist[0] == id ? userlist[1] : userlist[0];
                                 let partner = await User.findOne({ _id: idpartner });
                                 object.Partner = {
                                     id: partner._id,
@@ -111,7 +156,7 @@ router.post("/get_list_conversation", async(req, res) => {
     }
 });
 
-router.post("/get_conversation", async(req, res) => {
+router.post("/get_conversation", async (req, res) => {
     const { token, partner_id, conversation_id, index, count } = req.query;
     try {
         //Check if params are missing
@@ -143,7 +188,7 @@ router.post("/get_conversation", async(req, res) => {
             }
         }
         //Decode token to get user_id
-        jwt.verify(token, "secretToken", async(err, userData) => {
+        jwt.verify(token, "secretToken", async (err, userData) => {
             if (err) {
                 res.json({
                     message: "Token is invalid",
@@ -180,7 +225,7 @@ router.post("/get_conversation", async(req, res) => {
                 }
                 // Create data array
                 let messageArray = await Promise.all(
-                    conversation.MessageList.map(async(message_id) => {
+                    conversation.MessageList.map(async (message_id) => {
                         let message = await Message.findOne({ _id: message_id }, { __v: 0, IdConversation: 0 });
                         if (!message) return;
                         else {
@@ -193,7 +238,7 @@ router.post("/get_conversation", async(req, res) => {
                     })
                 );
                 //Sort and filter null message
-                messageArray = messageArray.sort(function(a, b) {
+                messageArray = messageArray.sort(function (a, b) {
                     return a.CreatedAt > b.CreatedAt;
                 }).filter(message => {
                     return message !== undefined;
@@ -215,11 +260,11 @@ router.post("/get_conversation", async(req, res) => {
         });
     }
 });
-router.post("/a", async(req, res) => {
+router.post("/a", async (req, res) => {
     let a = await Message.find({});
     return res.json(a);
 });
-router.post("/b", async(req, res) => {
+router.post("/b", async (req, res) => {
     const id = req.query.id;
     let a = await Conversation.findOneAndUpdate({ _id: id }, { LastMessage: Date.now() });
     return res.json(a);
@@ -230,7 +275,7 @@ router.post("/set_read_message", (req, res) => {
     const conversation_id = req.query.conversation_id;
     try {
         if ((token && partner_id) || (token && conversation_id)) {
-            jwt.verify(token, "secretToken", async(err, userData) => {
+            jwt.verify(token, "secretToken", async (err, userData) => {
                 if (err) {
                     res.json({
                         code: "9998",
@@ -332,7 +377,7 @@ router.post("/set_read_message", (req, res) => {
         });
     }
 });
-router.post("/delete_message", async(req, res) => {
+router.post("/delete_message", async (req, res) => {
     const { token, message_id } = req.query;
     let { partner_id, conversation_id } = req.query;
     try {
@@ -373,7 +418,7 @@ router.post("/delete_message", async(req, res) => {
             });
         }
         //Decode token to get user_id
-        jwt.verify(token, "secretToken", async(err, userData) => {
+        jwt.verify(token, "secretToken", async (err, userData) => {
             if (err) {
                 res.json({
                     message: "Token is invalid",
@@ -440,7 +485,7 @@ router.post("/delete_conversation", (req, res) => {
     const conversation_id = req.query.conversation_id;
     try {
         if ((token && partner_id) || (token && conversation_id)) {
-            jwt.verify(token, "secretToken", async(err, userData) => {
+            jwt.verify(token, "secretToken", async (err, userData) => {
                 if (err) {
                     res.json({
                         code: "9998",
@@ -463,7 +508,7 @@ router.post("/delete_conversation", (req, res) => {
                                     });
                                     if (conversation) {
                                         let messagelist = conversation.MessageList;
-                                        messagelist.forEach(async(message) => {
+                                        messagelist.forEach(async (message) => {
                                             await Message.findOneAndDelete({ _id: message });
                                         });
                                         await Conversation.findOneAndDelete({
@@ -481,11 +526,11 @@ router.post("/delete_conversation", (req, res) => {
                                     }
                                 } else if (partner_id) {
                                     let conversation = await Conversation.findOne({
-                                        UserList: { $all: [id,partner_id] }
+                                        UserList: { $all: [id, partner_id] }
                                     });
                                     if (conversation) {
                                         let messagelist = conversation.MessageList;
-                                        messagelist.forEach(async(message) => {
+                                        messagelist.forEach(async (message) => {
                                             await Message.findOneAndDelete({ _id: message });
                                         });
                                         await Conversation.findOneAndDelete({

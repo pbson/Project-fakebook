@@ -4,11 +4,15 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const mongoose = require('mongoose')
 
+const Notification = require('../../push_notification/send')
+const newCommentNotification = Notification.newCommentNotification;
+const getUserDeviceToken = Notification.getUserDeviceToken;
+
 const Comment = require("../../models/Comment");
 const User = require("../../models/User");
 const Post = require("../../models/Post");
 
-router.post("/set_comment", async(req,res) => {
+router.post("/set_comment", async (req, res) => {
     const { token, id, comment, index, count } = req.query;
     try {
         //Check if params are missing
@@ -27,7 +31,7 @@ router.post("/set_comment", async(req,res) => {
             });
         }
         //Decode token to get user_id
-        jwt.verify(token, "secretToken", async(err, userData) => {
+        jwt.verify(token, "secretToken", async (err, userData) => {
             if (err) {
                 res.json({
                     message: "Token is invalid",
@@ -66,20 +70,24 @@ router.post("/set_comment", async(req,res) => {
                 try {
                     let newComment = new Comment(addComment);
                     await newComment.save();
-                    await Post.findOneAndUpdate({ _id: id }, { $push: { Comment: newComment._id.toString() } });
+                    post = await Post.findOneAndUpdate({ _id: id }, { $push: { Comment: newComment._id.toString() } });
+
+                    //send push notification
+                    const deviceToken = await getUserDeviceToken(post.User_id);
+                    newCommentNotification(deviceToken, user.phonenumber, id)
                 } catch (error) {
                     console.log(error);
                 }
                 // Create data array
                 let commentArray = await Promise.all(
-                    post.Comment.map(async(id) => {
-                        let comment = await Comment.findOne({ _id: id }, { __v: 0});
+                    post.Comment.map(async (id) => {
+                        let comment = await Comment.findOne({ _id: id }, { __v: 0 });
                         if (!comment) return;
                         else {
                             let user = await User.findOne({ _id: userData.user.id });
                             comment = JSON.parse(JSON.stringify(comment));
                             comment.poster = ({
-                                id:  userData.user.id,
+                                id: userData.user.id,
                                 phonenumber: user.phonenumber,
                                 avatar: user.avatar,
                             })
@@ -88,7 +96,7 @@ router.post("/set_comment", async(req,res) => {
                     })
                 );
                 //Sort and filter null comment
-                commentArray = commentArray.sort(function(a, b) {
+                commentArray = commentArray.sort(function (a, b) {
                     return a.CreatedAt > b.CreatedAt;
                 }).filter(comment => {
                     return comment !== undefined;
@@ -108,7 +116,7 @@ router.post("/set_comment", async(req,res) => {
             message: "Server error",
             code: "1001",
         });
-    }    
+    }
 
 })
 
@@ -131,7 +139,7 @@ router.post("/get_comment", async (req, res) => {
             });
         }
         //Decode token to get user_id
-        jwt.verify(token, "secretToken", async(err, userData) => {
+        jwt.verify(token, "secretToken", async (err, userData) => {
             if (err) {
                 res.json({
                     message: "Token is invalid",
@@ -162,14 +170,14 @@ router.post("/get_comment", async (req, res) => {
                 }
                 // Create data array
                 let commentArray = await Promise.all(
-                    post.Comment.map(async(id) => {
-                        let comment = await Comment.findOne({ _id: id }, { __v: 0});
+                    post.Comment.map(async (id) => {
+                        let comment = await Comment.findOne({ _id: id }, { __v: 0 });
                         if (!comment) return;
                         else {
                             let user = await User.findOne({ _id: userData.user.id });
                             comment = JSON.parse(JSON.stringify(comment));
                             comment.poster = ({
-                                id:  userData.user.id,
+                                id: userData.user.id,
                                 phonenumber: user.phonenumber,
                                 avatar: user.avatar,
                             })
@@ -178,7 +186,7 @@ router.post("/get_comment", async (req, res) => {
                     })
                 );
                 //Sort and filter null comment
-                commentArray = commentArray.sort(function(a, b) {
+                commentArray = commentArray.sort(function (a, b) {
                     return a.CreatedAt > b.CreatedAt;
                 }).filter(comment => {
                     return comment !== undefined;
@@ -198,7 +206,7 @@ router.post("/get_comment", async (req, res) => {
             message: "Server error",
             code: "1001",
         });
-    }    
+    }
 });
 
 module.exports = router;

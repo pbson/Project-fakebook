@@ -45,7 +45,6 @@ module.exports = (io) => {
                 IdConversation: conversation._id,
                 CreatedAt: Date.now()
             }
-            console.log(message);
             try {
                 let newMessage = new Message(message);
                 await newMessage.save();

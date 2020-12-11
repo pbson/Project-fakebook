@@ -8,6 +8,10 @@ const Report = require("../../models/Report");
 const cloudinary = require('cloudinary').v2
 const server = require("../../server");
 
+const Notification = require('../../push_notification/send')
+const newPostLikeNotification = Notification.newCommentNotification;
+const getUserDeviceToken = Notification.getUserDeviceToken;
+
 router.post("/add_post/", (req, res) => {
     const token = req.query.token;
     const described = req.query.described;
@@ -799,10 +803,14 @@ router.post("/like", async (req, res) => {
                 //Add like to post
                 try {
                     let post = await Post.findOne({ _id: id });
-                    if (post.Like.includes(user.id)){
-                        post = await Post.findOneAndUpdate({ _id: id }, { $pull: { Like: user.id } }, {new: true});
-                    }else{
-                        post = await Post.findOneAndUpdate({ _id: id }, { $push: { Like: user.id } }, {new: true});
+                    if (post.Like.includes(user.id)) {
+                        post = await Post.findOneAndUpdate({ _id: id }, { $pull: { Like: user.id } }, { new: true });
+                    } else {
+                        post = await Post.findOneAndUpdate({ _id: id }, { $push: { Like: user.id } }, { new: true });
+
+                        //send push notification
+                        const deviceToken = await getUserDeviceToken(post.User_id);
+                        newLikeNotification(deviceToken, user.phonenumber, id)
                     }
                     return res.json({
                         message: 'OK',
