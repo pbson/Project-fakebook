@@ -13,4 +13,5 @@ UpdatedAt: Date,
 Report : Array
 });
 
+postSchema.index({Status: 'text'});
 module.exports = mongoose.model('Post',postSchema); 

@@ -18,38 +18,96 @@ router.get("/chat", (req, res) => {
     res.render("chat");
 })
 
-router.post("set_message", async (req, res) => {
-    const { receiverId, senderId, content, isUnread } = req.query;
-
-    let conversation = await Conversation.findOne({
-        UserList: { $all: [senderId, receiverId] },
-    });
-
-    message = {
-        Receiver: receiverId,
-        Sender: senderId,
-        Content: content,
-        Unread: isUnread,
-        IdConversation: conversation._id,
-        CreatedAt: Date.now()
-    }
+router.post("/set_message", async (req, res) => {
+    const { receiverId, token, content, isUnread } = req.query;
 
     try {
-        let newMessage = new Message(message);
-        await newMessage.save();
-        await Conversation.findOneAndUpdate({ _id: conversation._id }, { $push: { MessageList: newMessage._id.toString() } });
+        //Decode token to get user_id
+        jwt.verify(token, "secretToken", async (err, userData) => {
+            if (err) {
+                res.json({
+                    message: "Token is invalid",
+                    code: "9998",
+                });
+            } else {
+                let user = await User.findOne({ _id: userData.user.id });
+                //Search user with token provided
+                if (!user) {
+                    return res.json({
+                        message: "Can't find user with token provided",
+                        code: "9995",
+                    });
+                }
+                //Check if token match
+                if (user.token !== token) {
+                    return res.json({
+                        message: "Token is invalid",
+                        code: "9998",
+                    });
+                }
+                //Check if user is locked
+                if (user.locked == 1) {
+                    return res.json({
+                        message: "User is locked",
+                        code: "9995",
+                    });
+                }
 
-        //send push notification
-        const deviceToken = await getUserDeviceToken(receiverId);
-        newMessageNotification(deviceToken, user.phonenumber, conversation._id)
+                let conversation = await Conversation.findOne({
+                    UserList: { $all: [receiverId.toString(), user._id.toString()] },
+                });
+
+            
+                message = {
+                    Receiver: receiverId,
+                    Sender: user._id,
+                    Content: content,
+                    Unread: isUnread,
+                    IdConversation: conversation._id,
+                    CreatedAt: Date.now()
+                }
+
+                let newMessage = new Message(message);
+                await newMessage.save();
+                await Conversation.findOneAndUpdate({ _id: conversation._id }, { $push: { MessageList: newMessage._id.toString() } });
+
+                //send push notification
+                const deviceToken = await getUserDeviceToken(receiverId);
+                newMessageNotification(deviceToken, user.phonenumber, conversation._id)
+        
+                return res.json({
+                    message: "OK",
+                    code: "1000",
+                    data: message,
+                });
+            }
+        });
+    } catch (error) {
+        return res.json({
+            message: "Server error",
+            code: "1001",
+        });
+    }
+})
+
+router.post("set_new_conversation", async (req, res) => {
+    const { receiverId, senderId } = req.query;
+
+    try {
+        let newConversation = new Conversation();
+
+        newConversation.UserList.push(receiverId);
+        newConversation.UserList.push(senderId);
+        newConversation.LastMessage = Date.now();
+
+        await newConversation.save();
 
         return res.json({
             message: "OK",
             code: "1000",
-            data: message,
+            data: newConversation._id,
         });
     } catch (error) {
-        console.log(error);
         return res.json({
             message: "Server error",
             code: "1001",

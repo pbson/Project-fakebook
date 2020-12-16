@@ -30,7 +30,7 @@ function newCommentNotification (receiverDeviceToken, sender, postId) {
     
     fcm.send(message, function(err, response){
         if (err) {
-            console.log("Something has gone wrong!")
+            console.log("Push unsuccesful!")
         } else {
             console.log("Successfully sent with response: ", response)
         }
@@ -53,7 +53,7 @@ function newPostLikeNotification(receiverDeviceToken, sender, postId) {
     
     fcm.send(message, function(err, response){
         if (err) {
-            console.log("Something has gone wrong!")
+            console.log("Push unsuccesful")
         } else {
             console.log("Successfully sent with response: ", response)
         }
@@ -76,7 +76,7 @@ function newMessageNotification(receiverDeviceToken, sender, conversationId){
     
     fcm.send(message, function(err, response){
         if (err) {
-            console.log("Something has gone wrong!")
+            console.log("Push unsuccesful")
         } else {
             console.log("Successfully sent with response: ", response)
         }
