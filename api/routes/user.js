@@ -5,6 +5,7 @@ const jwt = require("jsonwebtoken");
 const mongoose = require('mongoose')
 
 const User = require("../../models/User");
+const DeviceToken = require("../../models/DeviceToken");
 
 router.post("/signup", async (req, res) => {
   const { phonenumber, password, uuid } = req.query;
@@ -643,7 +644,7 @@ router.post("/set_user_info",(req,res) => {
               } 
 
               for (let prop in userData) if (!userData[prop]) delete userData[prop];
-              let user = await User.findOneAndUpdate({ _id: userData.user.id }, userData );
+              let updateUser = await User.findOneAndUpdate({ _id: userData.user.id }, userData );
 
               return res.json({
                   code: "1000",
@@ -756,7 +757,7 @@ router.post("/get_requested_friends", (req,res) => {
                       code: "9995",
                   });
               }
-              requestData = user.FriendsRequest.map(friend => {
+              requestData = user.FriendsRequest.map(async friend => {
                 let findFriend = await User.findOne({ _id: friend });
                 return {
                   id: findFriend.id,
@@ -772,6 +773,61 @@ router.post("/get_requested_friends", (req,res) => {
                   code: "1000",
                   message: "ok",
                   data: responseData
+              })
+          }
+
+      });
+  } catch (error) {
+      return res.json({
+          message: "Server error",
+          code: "1001",
+      });
+  }
+})
+
+router.post("/set_devtoken",(req,res) => {
+  const { token, devtoken } = req.query;
+  try {
+      //Decode token to get user_id
+      jwt.verify(token, "secretToken", async (err, userData) => {
+          if (err) {
+              res.json({
+                  message: "Token is invalid",
+                  code: "9998",
+              });
+          } else {
+              let user = await User.findOne({ _id: userData.user.id });
+              //Search user with token provided
+              if (!user) {
+                  return res.json({
+                      message: "Can't find user with token provided",
+                      code: "9995",
+                  });
+              }
+              //Check if token match
+              if (user.token !== token) {
+                  return res.json({
+                      message: "Token is invalid",
+                      code: "9998",
+                  });
+              }
+              //Check if user is locked
+              if (user.locked == 1) {
+                  return res.json({
+                      message: "User is locked",
+                      code: "9995",
+                  });
+              }
+              
+              let updateUser = DeviceToken.findOneAndUpdate({UserId: user.id}, { DeviceToken:devtoken})
+
+              return res.json({
+                  code: "1000",
+                  message: "ok",
+                  data: {
+                    userId: updateUser.id,
+                    DeviceToken: updateUser.DeviceToken
+                  }
               })
           }
 
