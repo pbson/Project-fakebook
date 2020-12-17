@@ -854,17 +854,38 @@ router.post("/get_list_post/", (req, res) => {
                                     message: "You are  locked",
                                 });
                             }
+                            let array_post = user.ListFriends;
+                            await Promise.all(user.ListFriends.map(async id_1 => {
+                                let user_1 = await User.findOne({ _id: id_1 });
+                                array_post = array_post.concat(user_1.ListFriends);
+                            }));
+                            array_post = array_post.filter((item, post) => array_post.indexOf(item) === post)
+                            
+                            const index_1 = array_post.indexOf(user._id);
+                            if (index_1 > -1) {
+                                array_post.splice(index_1, 1);
+                            }
+                            
                             let post = await Post.find({
-                                User_id: { $in: user.ListFriends }
+                                User_id: { $in: array_post }
                             }).sort({ CreatedAt: 1 })
-                            let last_post = post.findIndex(p => p._id == last_id)
-                            let post_slice = post.splice(last_post+1, count)
-                            let posts =await Promise.all(post_slice.map(async post => {
+
+                            let last_post = -1;
+                            if (last_id) {
+                                last_post = post.findIndex(p => p._id == last_id)
+                            }
+                            let count_1 = 20;
+                            if (count) {
+                                count_1 = count
+                            }
+                            let post_slice = post.splice(last_post + 1, count_1)
+                            // let post_slice = Post.paginate(post,{limit:count_1});
+                            let posts = await Promise.all(post_slice.map(async post => {
                                 let r_post = {}
                                 r_post.id = post._id
                                 r_post.described = post.Described
                                 r_post.status = post.Status
-                                r_post.created = post.CreatedAt.toUTCString() 
+                                r_post.created = post.CreatedAt.toUTCString()
                                 r_post.modified = post.UpdatedAt
                                 r_post.like = post.Like.length
                                 r_post.comment = post.Comment.length
@@ -872,16 +893,16 @@ router.post("/get_list_post/", (req, res) => {
                                     r_post.is_liked = 1;
                                 } else {
                                     r_post.is_liked = 0;
-                                } 
+                                }
                                 r_post.image = post.Image
                                 r_post.video = post.Video
                                 if (user._id = post.User_id) {
                                     r_post.can_edit = 1;
                                 } else {
                                     r_post.can_edit = 0;
-                                } 
+                                }
                                 let user1 = await User.findOne({ _id: post.User_id })
-                                if (user1) { 
+                                if (user1) {
                                     r_post.author = {
                                         id: user1._id,
                                         name: user1.phonenumber,
@@ -892,20 +913,20 @@ router.post("/get_list_post/", (req, res) => {
                                     } else {
                                         r_post.can_comment = 1
                                     }
-                                } 
+                                }
                                 return r_post;
                             }));
                             const l = post_slice.length;
-                            let last_id_1 = post_slice[l-1]._id
+                            let last_id_1 = post_slice[l - 1]._id
                             let data = {};
-                            data.post = posts; aster
-                            data.last_id = last_id_1 
+                            data.post = posts;
+                            data.last_id = last_id_1
                             return res.json({
                                 code: "1000",
-                                message : "Ok",
-                                data : data,  
-                            }) 
-                        } else { 
+                                message: "Ok",
+                                data: data,
+                            })
+                        } else {
                             if (user.token === "" || user.token === null) {
                                 return res.json({
                                     code: "1004",

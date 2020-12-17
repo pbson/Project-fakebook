@@ -1,4 +1,5 @@
 const mongoose = require('mongoose')
+const mongoosePaginate = require('mongoose-paginate-v2');
 
 const postSchema = mongoose.Schema({
 User_id : String,
@@ -13,4 +14,5 @@ UpdatedAt: Date,
 Report : Array
 });
 
+postSchema.plugin(mongoosePaginate);
 module.exports = mongoose.model('Post',postSchema); 
