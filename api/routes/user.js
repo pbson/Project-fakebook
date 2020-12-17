@@ -662,68 +662,6 @@ router.post("/set_user_info",(req,res) => {
   }
 })
 
-router.post("/get_user_info", (req,res) => {
-  const { token, user_id } = req.query;
-  try {
-      //Decode token to get user_id
-      jwt.verify(token, "secretToken", async (err, userData) => {
-          if (err) {
-              res.json({
-                  message: "Token is invalid",
-                  code: "9998",
-              });
-          } else {
-              let user = await User.findOne({ _id: userData.user.id });
-              //Search user with token provided
-              if (!user) {
-                  return res.json({
-                      message: "Can't find user with token provided",
-                      code: "9995",
-                  });
-              }
-              //Check if token match
-              if (user.token !== token) {
-                  return res.json({
-                      message: "Token is invalid",
-                      code: "9998",
-                  });
-              }
-              //Check if user is locked
-              if (user.locked == 1) {
-                  return res.json({
-                      message: "User is locked",
-                      code: "9995",
-                  });
-              }
-              let userData = {
-                id: user._id,
-                username: user.username,
-                created: user.created,
-                description: user.description,
-                avatar:user.avatar,
-                cover_image: user.cover_image,
-                address: user.address,
-                city: user.city,
-                country: user.country,
-                listing:user.listing,
-                online: user.online
-              } 
-              return res.json({
-                  code: "1000",
-                  message: "ok",
-                  data: userData
-              })
-          }
-
-      });
-  } catch (error) {
-      return res.json({
-          message: "Server error",
-          code: "1001",
-      });
-  }
-})
-
 router.post("/get_requested_friends", (req,res) => {
   const { token, index, count } = req.query;
   try {

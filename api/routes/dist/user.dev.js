@@ -1155,22 +1155,22 @@ router.post("/set_user_info", function (req, res) {
     });
   }
 });
-router.post("/get_user_info", function (req, res) {
+router.post("/get_requested_friends", function (req, res) {
   var _req$query7 = req.query,
       token = _req$query7.token,
-      user_id = _req$query7.user_id;
+      index = _req$query7.index,
+      count = _req$query7.count;
 
   try {
     //Decode token to get user_id
-    jwt.verify(token, "secretToken", function _callee11(err, userData) {
-      var user, _userData2;
-
-      return regeneratorRuntime.async(function _callee11$(_context11) {
+    jwt.verify(token, "secretToken", function _callee12(err, userData) {
+      var user, responseData;
+      return regeneratorRuntime.async(function _callee12$(_context12) {
         while (1) {
-          switch (_context11.prev = _context11.next) {
+          switch (_context12.prev = _context12.next) {
             case 0:
               if (!err) {
-                _context11.next = 4;
+                _context12.next = 4;
                 break;
               }
 
@@ -1178,73 +1178,90 @@ router.post("/get_user_info", function (req, res) {
                 message: "Token is invalid",
                 code: "9998"
               });
-              _context11.next = 15;
+              _context12.next = 16;
               break;
 
             case 4:
-              _context11.next = 6;
+              _context12.next = 6;
               return regeneratorRuntime.awrap(User.findOne({
-                _id: _userData2.user.id
+                _id: userData.user.id
               }));
 
             case 6:
-              user = _context11.sent;
+              user = _context12.sent;
 
               if (user) {
-                _context11.next = 9;
+                _context12.next = 9;
                 break;
               }
 
-              return _context11.abrupt("return", res.json({
+              return _context12.abrupt("return", res.json({
                 message: "Can't find user with token provided",
                 code: "9995"
               }));
 
             case 9:
               if (!(user.token !== token)) {
-                _context11.next = 11;
+                _context12.next = 11;
                 break;
               }
 
-              return _context11.abrupt("return", res.json({
+              return _context12.abrupt("return", res.json({
                 message: "Token is invalid",
                 code: "9998"
               }));
 
             case 11:
               if (!(user.locked == 1)) {
-                _context11.next = 13;
+                _context12.next = 13;
                 break;
               }
 
-              return _context11.abrupt("return", res.json({
+              return _context12.abrupt("return", res.json({
                 message: "User is locked",
                 code: "9995"
               }));
 
             case 13:
-              _userData2 = {
-                id: user._id,
-                username: user.username,
-                created: user.created,
-                description: user.description,
-                avatar: user.avatar,
-                cover_image: user.cover_image,
-                address: user.address,
-                city: user.city,
-                country: user.country,
-                listing: user.listing,
-                online: user.online
+              requestData = user.FriendsRequest.map(function _callee11(friend) {
+                var findFriend;
+                return regeneratorRuntime.async(function _callee11$(_context11) {
+                  while (1) {
+                    switch (_context11.prev = _context11.next) {
+                      case 0:
+                        _context11.next = 2;
+                        return regeneratorRuntime.awrap(User.findOne({
+                          _id: friend
+                        }));
+
+                      case 2:
+                        findFriend = _context11.sent;
+                        return _context11.abrupt("return", {
+                          id: findFriend.id,
+                          username: findFriend.username,
+                          avatar: findFriend.avatar
+                        });
+
+                      case 4:
+                      case "end":
+                        return _context11.stop();
+                    }
+                  }
+                });
+              });
+              responseData = {
+                request: requestData,
+                total: user.FriendsRequest.length
               };
-              return _context11.abrupt("return", res.json({
+              return _context12.abrupt("return", res.json({
                 code: "1000",
                 message: "ok",
-                data: _userData2
+                data: responseData
               }));
 
-            case 15:
+            case 16:
             case "end":
-              return _context11.stop();
+              return _context12.stop();
           }
         }
       });
@@ -1256,16 +1273,15 @@ router.post("/get_user_info", function (req, res) {
     });
   }
 });
-router.post("/get_requested_friends", function (req, res) {
+router.post("/set_devtoken", function (req, res) {
   var _req$query8 = req.query,
       token = _req$query8.token,
-      index = _req$query8.index,
-      count = _req$query8.count;
+      devtoken = _req$query8.devtoken;
 
   try {
     //Decode token to get user_id
     jwt.verify(token, "secretToken", function _callee13(err, userData) {
-      var user, responseData;
+      var user, updateUser;
       return regeneratorRuntime.async(function _callee13$(_context13) {
         while (1) {
           switch (_context13.prev = _context13.next) {
@@ -1279,7 +1295,7 @@ router.post("/get_requested_friends", function (req, res) {
                 message: "Token is invalid",
                 code: "9998"
               });
-              _context13.next = 16;
+              _context13.next = 15;
               break;
 
             case 4:
@@ -1324,129 +1340,12 @@ router.post("/get_requested_friends", function (req, res) {
               }));
 
             case 13:
-              requestData = user.FriendsRequest.map(function _callee12(friend) {
-                var findFriend;
-                return regeneratorRuntime.async(function _callee12$(_context12) {
-                  while (1) {
-                    switch (_context12.prev = _context12.next) {
-                      case 0:
-                        _context12.next = 2;
-                        return regeneratorRuntime.awrap(User.findOne({
-                          _id: friend
-                        }));
-
-                      case 2:
-                        findFriend = _context12.sent;
-                        return _context12.abrupt("return", {
-                          id: findFriend.id,
-                          username: findFriend.username,
-                          avatar: findFriend.avatar
-                        });
-
-                      case 4:
-                      case "end":
-                        return _context12.stop();
-                    }
-                  }
-                });
-              });
-              responseData = {
-                request: requestData,
-                total: user.FriendsRequest.length
-              };
-              return _context13.abrupt("return", res.json({
-                code: "1000",
-                message: "ok",
-                data: responseData
-              }));
-
-            case 16:
-            case "end":
-              return _context13.stop();
-          }
-        }
-      });
-    });
-  } catch (error) {
-    return res.json({
-      message: "Server error",
-      code: "1001"
-    });
-  }
-});
-router.post("/set_devtoken", function (req, res) {
-  var _req$query9 = req.query,
-      token = _req$query9.token,
-      devtoken = _req$query9.devtoken;
-
-  try {
-    //Decode token to get user_id
-    jwt.verify(token, "secretToken", function _callee14(err, userData) {
-      var user, updateUser;
-      return regeneratorRuntime.async(function _callee14$(_context14) {
-        while (1) {
-          switch (_context14.prev = _context14.next) {
-            case 0:
-              if (!err) {
-                _context14.next = 4;
-                break;
-              }
-
-              res.json({
-                message: "Token is invalid",
-                code: "9998"
-              });
-              _context14.next = 15;
-              break;
-
-            case 4:
-              _context14.next = 6;
-              return regeneratorRuntime.awrap(User.findOne({
-                _id: userData.user.id
-              }));
-
-            case 6:
-              user = _context14.sent;
-
-              if (user) {
-                _context14.next = 9;
-                break;
-              }
-
-              return _context14.abrupt("return", res.json({
-                message: "Can't find user with token provided",
-                code: "9995"
-              }));
-
-            case 9:
-              if (!(user.token !== token)) {
-                _context14.next = 11;
-                break;
-              }
-
-              return _context14.abrupt("return", res.json({
-                message: "Token is invalid",
-                code: "9998"
-              }));
-
-            case 11:
-              if (!(user.locked == 1)) {
-                _context14.next = 13;
-                break;
-              }
-
-              return _context14.abrupt("return", res.json({
-                message: "User is locked",
-                code: "9995"
-              }));
-
-            case 13:
               updateUser = DeviceToken.findOneAndUpdate({
                 UserId: user.id
               }, {
                 DeviceToken: devtoken
               });
-              return _context14.abrupt("return", res.json({
+              return _context13.abrupt("return", res.json({
                 code: "1000",
                 message: "ok",
                 data: {
@@ -1457,7 +1356,7 @@ router.post("/set_devtoken", function (req, res) {
 
             case 15:
             case "end":
-              return _context14.stop();
+              return _context13.stop();
           }
         }
       });
