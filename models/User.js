@@ -1,6 +1,9 @@
 const mongoose = require('mongoose')
 
 const userSchema = mongoose.Schema({
+    username: {
+        type: String
+    },
     phonenumber: {
         type: String
     },
@@ -16,6 +19,13 @@ const userSchema = mongoose.Schema({
     avatar: {
         type: String
     },
+    cover_image: String,
+    address: String,
+    city: String, 
+    listing: String,
+    online: String,
+    description: String,
+    created: String,
     latestLoginTime: {
         type: Date,
         dafault: Date.now

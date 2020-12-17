@@ -3,21 +3,20 @@ const Conversation = require("../models/Conversation");
 const Message = require("../models/Message");
 const User = require("../models/User");
 const botName = 'ChatCord Bot';
+const request = require('request');
+
 module.exports = (io) => {
     io.on("connection", async(socket) => {
+        console.log(socket.id)
         //Joinchat event
         socket.on('joinChat', async(info) => {
+            console.log('i come in')
 
-            console.log(info)
             let conversation = await Conversation.findOne({
                 UserList: { $all: [info.userid, info.partnerid] },
             });
             if (conversation) {
                 socket.join(conversation._id);
-                io.to(conversation._id).emit('roomUsers', {
-                    room: conversation._id,
-                    users: 2
-                });
             } else {
                 let newConversation = new Conversation();
                 newConversation.UserList.push(info.userid);
@@ -25,36 +24,29 @@ module.exports = (io) => {
                 newConversation.LastMessage = Date.now();
                 await newConversation.save();
                 socket.join(newConversation._id);
-                io.to(newConversation._id).emit('roomUsers', {
-                    room: newConversation._id,
-                    users: 2
-                });
             }
         });
         //Send event
         socket.on('send', async data => {
-            let conversation = await Conversation.findOne({
-                UserList: { $all: [data.Sender, data.Receiver] },
+            let partnerId = data.partnerId
+            let token = data.token
+            let Content = data.Content
+            let isUnread = data.isUnread
+
+            request({
+                url:`https://project-facebook-clone.herokuapp.com/it4788/chatsocket/set_message?receiverId=${partnerId}&token=${token}&content=${Content}&isUnread=${isUnread}`,
+                method: "POST",
+                json: true,
+            }, async function (error, response){
+                console.log(response.body.data);
+
+                let conversation = await Conversation.findOne({
+                    UserList: { $all: [response.body.data.Sender, response.body.data.Receiver] },
+                })
+
+                io.to(conversation._id).emit('onmessage', response.body);
             });
 
-            message = {
-                Receiver: data.Receiver,
-                Sender: data.Sender,
-                Content: data.Content,
-                Unread: data.Unread,
-                IdConversation: conversation._id,
-                CreatedAt: Date.now()
-            }
-            console.log(message);
-            try {
-                let newMessage = new Message(message);
-                await newMessage.save();
-                await Conversation.findOneAndUpdate({ _id: conversation._id }, { $push: { MessageList: newMessage._id.toString() } });
-            } catch (error) {
-                console.log(error);
-            }
-
-            io.to(conversation._id).emit('onmessage', message);
         });
         socket.on('deleteMessgae',async data=>{
           let conversation = await Conversation.findOne({UserList: { $all: [data.userid, data.partnerid] }});

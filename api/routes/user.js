@@ -535,5 +535,252 @@ router.post("/set_request_friend/", (req, res) => {
 
 })
 
+//get user info
+router.post("/get_user_info", (req,res) => {
+  const { token, user_id } = req.query;
+  try {
+      //Decode token to get user_id
+      jwt.verify(token, "secretToken", async (err, userData) => {
+          if (err) {
+              res.json({
+                  message: "Token is invalid",
+                  code: "9998",
+              });
+          } else {
+              let user = await User.findOne({ _id: userData.user.id });
+              //Search user with token provided
+              if (!user) {
+                  return res.json({
+                      message: "Can't find user with token provided",
+                      code: "9995",
+                  });
+              }
+              //Check if token match
+              if (user.token !== token) {
+                  return res.json({
+                      message: "Token is invalid",
+                      code: "9998",
+                  });
+              }
+              //Check if user is locked
+              if (user.locked == 1) {
+                  return res.json({
+                      message: "User is locked",
+                      code: "9995",
+                  });
+              }
+              let userData = {
+                id: user._id,
+                username: user.username,
+                created: user.created,
+                description: user.description,
+                avatar:user.avatar,
+                cover_image: user.cover_image,
+                address: user.address,
+                city: user.city,
+                country: user.country,
+                listing:user.listing,
+                online: user.online
+              } 
+              return res.json({
+                  code: "1000",
+                  message: "ok",
+                  data: userData
+              })
+          }
 
+      });
+  } catch (error) {
+      return res.json({
+          message: "Server error",
+          code: "1001",
+      });
+  }
+})
+
+router.post("/set_user_info",(req,res) => {
+  const { token, username, description, avatar, address, city, country, cover_image, link } = req.query;
+  try {
+      //Decode token to get user_id
+      jwt.verify(token, "secretToken", async (err, userData) => {
+          if (err) {
+              res.json({
+                  message: "Token is invalid",
+                  code: "9998",
+              });
+          } else {
+              let user = await User.findOne({ _id: userData.user.id });
+              //Search user with token provided
+              if (!user) {
+                  return res.json({
+                      message: "Can't find user with token provided",
+                      code: "9995",
+                  });
+              }
+              //Check if token match
+              if (user.token !== token) {
+                  return res.json({
+                      message: "Token is invalid",
+                      code: "9998",
+                  });
+              }
+              //Check if user is locked
+              if (user.locked == 1) {
+                  return res.json({
+                      message: "User is locked",
+                      code: "9995",
+                  });
+              }
+              let userData = {
+                username: username,
+                description: description,
+                avatar:avatar,
+                cover_image: cover_image,
+                address: address,
+                city: city,
+                country: country,
+                listing:listing,
+              } 
+
+              for (let prop in userData) if (!userData[prop]) delete userData[prop];
+              let user = await User.findOneAndUpdate({ _id: userData.user.id }, userData );
+
+              return res.json({
+                  code: "1000",
+                  message: "ok",
+                  data: userData
+              })
+          }
+
+      });
+  } catch (error) {
+      return res.json({
+          message: "Server error",
+          code: "1001",
+      });
+  }
+})
+
+router.post("/get_user_info", (req,res) => {
+  const { token, user_id } = req.query;
+  try {
+      //Decode token to get user_id
+      jwt.verify(token, "secretToken", async (err, userData) => {
+          if (err) {
+              res.json({
+                  message: "Token is invalid",
+                  code: "9998",
+              });
+          } else {
+              let user = await User.findOne({ _id: userData.user.id });
+              //Search user with token provided
+              if (!user) {
+                  return res.json({
+                      message: "Can't find user with token provided",
+                      code: "9995",
+                  });
+              }
+              //Check if token match
+              if (user.token !== token) {
+                  return res.json({
+                      message: "Token is invalid",
+                      code: "9998",
+                  });
+              }
+              //Check if user is locked
+              if (user.locked == 1) {
+                  return res.json({
+                      message: "User is locked",
+                      code: "9995",
+                  });
+              }
+              let userData = {
+                id: user._id,
+                username: user.username,
+                created: user.created,
+                description: user.description,
+                avatar:user.avatar,
+                cover_image: user.cover_image,
+                address: user.address,
+                city: user.city,
+                country: user.country,
+                listing:user.listing,
+                online: user.online
+              } 
+              return res.json({
+                  code: "1000",
+                  message: "ok",
+                  data: userData
+              })
+          }
+
+      });
+  } catch (error) {
+      return res.json({
+          message: "Server error",
+          code: "1001",
+      });
+  }
+})
+
+router.post("/get_requested_friends", (req,res) => {
+  const { token, index, count } = req.query;
+  try {
+      //Decode token to get user_id
+      jwt.verify(token, "secretToken", async (err, userData) => {
+          if (err) {
+              res.json({
+                  message: "Token is invalid",
+                  code: "9998",
+              });
+          } else {
+              let user = await User.findOne({ _id: userData.user.id });
+              //Search user with token provided
+              if (!user) {
+                  return res.json({
+                      message: "Can't find user with token provided",
+                      code: "9995",
+                  });
+              }
+              //Check if token match
+              if (user.token !== token) {
+                  return res.json({
+                      message: "Token is invalid",
+                      code: "9998",
+                  });
+              }
+              //Check if user is locked
+              if (user.locked == 1) {
+                  return res.json({
+                      message: "User is locked",
+                      code: "9995",
+                  });
+              }
+              requestData = user.FriendsRequest.map(friend => {
+                let findFriend = await User.findOne({ _id: friend });
+                return {
+                  id: findFriend.id,
+                  username: findFriend.username,
+                  avatar: findFriend.avatar
+                }
+              })
+              let responseData = {
+                request: requestData,
+                total: user.FriendsRequest.length
+              } 
+              return res.json({
+                  code: "1000",
+                  message: "ok",
+                  data: responseData
+              })
+          }
+
+      });
+  } catch (error) {
+      return res.json({
+          message: "Server error",
+          code: "1001",
+      });
+  }
+})
 module.exports = router;
