@@ -1368,4 +1368,124 @@ router.post("/set_devtoken", function (req, res) {
     });
   }
 });
+router.post("/get_list_friends", function (req, res) {
+  var token = req.query.token;
+
+  try {
+    //Decode token to get user_id
+    jwt.verify(token, "secretToken", function _callee15(err, userData) {
+      var user, responseData;
+      return regeneratorRuntime.async(function _callee15$(_context15) {
+        while (1) {
+          switch (_context15.prev = _context15.next) {
+            case 0:
+              if (!err) {
+                _context15.next = 4;
+                break;
+              }
+
+              res.json({
+                message: "Token is invalid",
+                code: "9998"
+              });
+              _context15.next = 18;
+              break;
+
+            case 4:
+              _context15.next = 6;
+              return regeneratorRuntime.awrap(User.findOne({
+                _id: userData.user.id
+              }));
+
+            case 6:
+              user = _context15.sent;
+
+              if (user) {
+                _context15.next = 9;
+                break;
+              }
+
+              return _context15.abrupt("return", res.json({
+                message: "Can't find user with token provided",
+                code: "9995"
+              }));
+
+            case 9:
+              if (!(user.token !== token)) {
+                _context15.next = 11;
+                break;
+              }
+
+              return _context15.abrupt("return", res.json({
+                message: "Token is invalid",
+                code: "9998"
+              }));
+
+            case 11:
+              if (!(user.locked == 1)) {
+                _context15.next = 13;
+                break;
+              }
+
+              return _context15.abrupt("return", res.json({
+                message: "User is locked",
+                code: "9995"
+              }));
+
+            case 13:
+              _context15.next = 15;
+              return regeneratorRuntime.awrap(Promise.all(user.ListFriends.map(function _callee14(friend) {
+                var findFriend;
+                return regeneratorRuntime.async(function _callee14$(_context14) {
+                  while (1) {
+                    switch (_context14.prev = _context14.next) {
+                      case 0:
+                        _context14.next = 2;
+                        return regeneratorRuntime.awrap(User.findOne({
+                          _id: friend
+                        }));
+
+                      case 2:
+                        findFriend = _context14.sent;
+                        return _context14.abrupt("return", {
+                          id: findFriend._id,
+                          username: findFriend.username,
+                          avatar: findFriend.avatar,
+                          is_online: findFriend.is_online
+                        });
+
+                      case 4:
+                      case "end":
+                        return _context14.stop();
+                    }
+                  }
+                });
+              })));
+
+            case 15:
+              requestData = _context15.sent;
+              responseData = {
+                friends: requestData,
+                total: user.FriendsRequest.length
+              };
+              return _context15.abrupt("return", res.json({
+                code: "1000",
+                message: "ok",
+                data: responseData
+              }));
+
+            case 18:
+            case "end":
+              return _context15.stop();
+          }
+        }
+      });
+    });
+  } catch (error) {
+    return res.json({
+      message: "Server error",
+      code: "1001"
+    });
+  }
+});
 module.exports = router;

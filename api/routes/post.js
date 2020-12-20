@@ -226,6 +226,72 @@ router.post("/add_post/", (req, res) => {
 
 })
 
+router.post("/add_post2/", (req, res) => {
+    const token = req.query.token;
+    const described = req.query.described;
+    const status = req.query.status
+    try {
+        if (token) {
+            jwt.verify(token, "secretToken", async (err, userData) => {
+                if (err) {
+                    res.json({
+                        code: "1004s",
+                        message: "Parameter value is invalid token"
+                    });
+                } else {
+                    const id = userData.user.id
+                    let user = await User.findOne({ _id: id })
+                    if (user) {
+                        if (token === user.token) {
+                            let post = new Post();
+
+                            post.Image = [...req.body];
+                            post.User_id = user._id
+                            post.Described = described
+                            post.Status = status
+                            post.CreatedAt = Date.now()
+                            post.save();
+                            return res.json({
+                                code: "1000",
+                                message: "OK",
+                                data: post
+                            });
+                        } else {
+                            if (user.token === "" || user.token === null) {
+                                return res.json({
+                                    code: "1004",
+                                    message: "User don't have token in db"
+                                })
+                            } else {
+                                return res.json({
+                                    code: "1004",
+                                    message: "Token is invalid"
+                                })
+                            }
+                        }
+                    } else {
+                        return res.json({
+                            code: "9995",
+                            message: "Don't find user by token"
+                        })
+                    }
+                }
+            });
+        } else {
+            return res.json(
+                {
+                    code: "1002",
+                    message: "No have Token"
+                }
+            )
+        }
+    } catch (error) {
+        return res.json({
+            code: "1005",
+            message: error
+        })
+    }
+})
 
 router.post("/get_post/", (req, res) => {
     const token = req.query.token;
@@ -839,6 +905,7 @@ router.post("/like", async (req, res) => {
 
 // route.post("/get_list_post/")
 router.post("/get_list_post/", (req, res) => {
+    console.log('right on')
     const token = req.query.token;
     const last_id = req.query.last_id;
     const index = req.query.index;
@@ -868,12 +935,12 @@ router.post("/get_list_post/", (req, res) => {
                                 array_post = array_post.concat(user_1.ListFriends);
                             }));
                             array_post = array_post.filter((item, post) => array_post.indexOf(item) === post)
-                            
-                            const index_1 = array_post.indexOf(user._id);
-                            if (index_1 > -1) {
-                                array_post.splice(index_1, 1);
-                            }
-                            
+
+                            // const index_1 = array_post.indexOf(user._id);
+                            // if (index_1 > -1) {
+                            //     array_post.splice(index_1, 1);
+                            // }
+
                             let post = await Post.find({
                                 User_id: { $in: array_post }
                             }).sort({ CreatedAt: 1 })
@@ -925,10 +992,10 @@ router.post("/get_list_post/", (req, res) => {
                                 return r_post;
                             }));
                             const l = post_slice.length;
-                            let last_id_1 = post_slice[l - 1]._id
+                            // let last_id_1 = post_slice[l - 1]._id
                             let data = {};
                             data.post = posts;
-                            data.last_id = last_id_1
+                            // data.last_id = last_id_1
                             return res.json({
                                 code: "1000",
                                 message: "Ok",

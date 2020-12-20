@@ -33,7 +33,9 @@ const userSchema = mongoose.Schema({
     ListFriends: Array,
     FriendsRequest : Array ,
     Req: Array,
-    locked : Number
+    locked : Number,
+    is_online: Boolean
 });
 
+userSchema.index({username: 'text'});
 module.exports = mongoose.model('User', userSchema);

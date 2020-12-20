@@ -777,4 +777,66 @@ router.post("/set_devtoken",(req,res) => {
       });
   }
 })
+
+router.post("/get_list_friends", (req,res) => {
+  const { token } = req.query;
+  try {
+      //Decode token to get user_id
+      jwt.verify(token, "secretToken", async (err, userData) => {
+          if (err) {
+              res.json({
+                  message: "Token is invalid",
+                  code: "9998",
+              });
+          } else {
+              let user = await User.findOne({ _id: userData.user.id });
+              //Search user with token provided
+              if (!user) {
+                  return res.json({
+                      message: "Can't find user with token provided",
+                      code: "9995",
+                  });
+              }
+              //Check if token match
+              if (user.token !== token) {
+                  return res.json({
+                      message: "Token is invalid",
+                      code: "9998",
+                  });
+              }
+              //Check if user is locked
+              if (user.locked == 1) {
+                  return res.json({
+                      message: "User is locked",
+                      code: "9995",
+                  });
+              }
+              requestData = await Promise.all(user.ListFriends.map(async friend => {
+                let findFriend = await User.findOne({ _id: friend });
+                return {
+                  id: findFriend._id,
+                  username: findFriend.username,
+                  avatar: findFriend.avatar,
+                  is_online: findFriend.is_online
+                }
+              }))
+              let responseData = {
+                friends: requestData,
+                total: user.FriendsRequest.length
+              } 
+              return res.json({
+                  code: "1000",
+                  message: "ok",
+                  data: responseData
+              })
+          }
+
+      });
+  } catch (error) {
+      return res.json({
+          message: "Server error",
+          code: "1001",
+      });
+  }
+})
 module.exports = router;

@@ -19,7 +19,7 @@ router.get("/chat", (req, res) => {
 })
 
 router.post("/set_message", async (req, res) => {
-    const { receiverId, token, content, isUnread } = req.query;
+    const { receiverId, token, content, isUnread, conversationId } = req.query;
 
     try {
         //Decode token to get user_id
@@ -53,28 +53,18 @@ router.post("/set_message", async (req, res) => {
                     });
                 }
 
-                let conversation = await Conversation.findOne({
-                    UserList: { $all: [receiverId.toString(), user._id.toString()] },
-                });
-
-            
                 message = {
                     Receiver: receiverId,
                     Sender: user._id,
                     Content: content,
                     Unread: isUnread,
-                    IdConversation: conversation._id,
+                    IdConversation: conversationId,
                     CreatedAt: Date.now()
                 }
 
                 let newMessage = new Message(message);
                 await newMessage.save();
-                await Conversation.findOneAndUpdate({ _id: conversation._id }, { $push: { MessageList: newMessage._id.toString() } });
-
-                //send push notification
-                const deviceToken = await getUserDeviceToken(receiverId);
-                newMessageNotification(deviceToken, user.phonenumber, conversation._id)
-        
+                await Conversation.findOneAndUpdate({ _id: conversationId }, { $push: { MessageList: newMessage._id.toString() } });
                 return res.json({
                     message: "OK",
                     code: "1000",
@@ -90,23 +80,64 @@ router.post("/set_message", async (req, res) => {
     }
 })
 
-router.post("set_new_conversation", async (req, res) => {
-    const { receiverId, senderId } = req.query;
-
+router.post("/set_conversation", async (req, res) => {
+    const { token, partnerid } = req.query;
     try {
-        let newConversation = new Conversation();
+        jwt.verify(token, "secretToken", async (err, userData) => {
+            if (err) {
+                res.json({
+                    message: "Token is invalid",
+                    code: "9998",
+                });
+            } else {
+                let user = await User.findOne({ _id: userData.user.id });
+                //Search user with token provided
+                if (!user) {
+                    return res.json({
+                        message: "Can't find user with token provided",
+                        code: "9995",
+                    });
+                }
+                //Check if token match
+                if (user.token !== token) {
+                    return res.json({
+                        message: "Token is invalid",
+                        code: "9998",
+                    });
+                }
+                //Check if user is locked
+                if (user.locked == 1) {
+                    return res.json({
+                        message: "User is locked",
+                        code: "9995",
+                    });
+                }
+                let conversation = await Conversation.findOne({
+                    $or:[ 
+                        {UserList:[user.id, partnerid]}, {UserList:[partnerid, user.id]} 
+                    ]
+                });
+                if (conversation) {
+                    return res.json({
+                        message: "OK",
+                        code: "1000",
+                        data: conversation._id,
+                    });
+                } else {
+                    let newConversation = new Conversation();
+                    newConversation.UserList.push(user.id);
+                    newConversation.UserList.push(partnerid);
+                    newConversation.LastMessage = Date.now();
+                    await newConversation.save();
 
-        newConversation.UserList.push(receiverId);
-        newConversation.UserList.push(senderId);
-        newConversation.LastMessage = Date.now();
-
-        await newConversation.save();
-
-        return res.json({
-            message: "OK",
-            code: "1000",
-            data: newConversation._id,
-        });
+                    return res.json({
+                        message: "OK",
+                        code: "1000",
+                        data: newConversation._id,
+                    })
+                }
+            }
+        })
     } catch (error) {
         return res.json({
             message: "Server error",
@@ -114,7 +145,6 @@ router.post("set_new_conversation", async (req, res) => {
         });
     }
 })
-
 router.post("/get_list_conversation", async (req, res) => {
     const token = req.query.token;
     const index = req.query.index;
@@ -153,25 +183,28 @@ router.post("/get_list_conversation", async (req, res) => {
                                 let object = {};
                                 object.id = conversation._id;
                                 const userlist = conversation.UserList;
+                                console.log(userlist);
                                 let idpartner = userlist[0] == id ? userlist[1] : userlist[0];
                                 let partner = await User.findOne({ _id: idpartner });
                                 object.Partner = {
                                     id: partner._id,
                                     avatar: partner.avatar,
-                                    phonenumber: partner.phonenumber
+                                    username: partner.username
                                 };
                                 const messagelist = conversation.MessageList;
                                 const idlastmess = messagelist.pop();
                                 let lastmess = await Message.findOne({ _id: idlastmess });
-                                object.LastMessage = {
-                                    message: lastmess.Content,
-                                    created: lastmess.CreatedAt,
-                                    unread: lastmess.Unread,
-                                };
-                                if (lastmess.Unread !== false) {
-                                    countmess = countmess + 1;
+                                if (lastmess){
+                                    object.LastMessage = {
+                                        message: lastmess.Content,
+                                        created: lastmess.CreatedAt,
+                                        unread: lastmess.Unread,
+                                    };
+                                    if (lastmess.Unread !== false) {
+                                        countmess = countmess + 1;
+                                    }
+                                    resarray.push(object);
                                 }
-                                resarray.push(object);
                             }
                             return res.json({
                                 code: "1000",
@@ -318,6 +351,7 @@ router.post("/get_conversation", async (req, res) => {
         });
     }
 });
+
 router.post("/a", async (req, res) => {
     let a = await Message.find({});
     return res.json(a);
