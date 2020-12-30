@@ -570,7 +570,7 @@ router.post("/get_user_info", (req,res) => {
                       code: "9995",
                   });
               }
-              let resData = {
+              let userData = {
                 id: user._id,
                 username: user.username,
                 created: user.created,
@@ -586,7 +586,7 @@ router.post("/get_user_info", (req,res) => {
               return res.json({
                   code: "1000",
                   message: "ok",
-                  data: resData
+                  data: userData
               })
           }
 
