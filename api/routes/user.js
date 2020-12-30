@@ -632,7 +632,7 @@ router.post("/set_user_info",(req,res) => {
                       code: "9995",
                   });
               }
-              let userData = {
+              let resData = {
                 username: username,
                 description: description,
                 avatar:avatar,
@@ -649,7 +649,7 @@ router.post("/set_user_info",(req,res) => {
               return res.json({
                   code: "1000",
                   message: "ok",
-                  data: userData
+                  data: resData
               })
           }
 
