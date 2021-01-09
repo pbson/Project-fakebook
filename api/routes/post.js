@@ -72,7 +72,7 @@ router.post("/add_post/", (req, res) => {
                                 } else {
                                     if (req.files.image1 !== undefined) {
                                         const image1 = req.files.image1;
-                                        if (image1.mimetype === "image/jpeg" || image1.mimetype === "image/jpg" || image1.mimetype === "image2/png") {
+                                        if (image1.mimetype === "image/jpeg" || image1.mimetype === "image/jpg" || image1.mimetype === "image/png") {
                                             if (image1.size < (4 * 1024 * 1024)) {
                                                 let image1path;
                                                 await cloudinary.uploader.upload(image1.tempFilePath, (err, result) => {
@@ -85,12 +85,11 @@ router.post("/add_post/", (req, res) => {
                                                         image1path = result.url
                                                     }
                                                 })
-
                                                 post.Image.push({ id: 1, url: image1path })
                                             } else {
                                                 return res.json({
                                                     code: "1006",
-                                                    message: "Image1 size is too big"
+                                                    message: "Image size is too big"
                                                 })
                                             }
 
