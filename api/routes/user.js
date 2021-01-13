@@ -662,67 +662,6 @@ router.post("/set_user_info",(req,res) => {
   }
 })
 
-router.post("/get_requested_friends", (req,res) => {
-  const { token, index, count } = req.query;
-  try {
-      //Decode token to get user_id
-      jwt.verify(token, "secretToken", async (err, userData) => {
-          if (err) {
-              res.json({
-                  message: "Token is invalid",
-                  code: "9998",
-              });
-          } else {
-              let user = await User.findOne({ _id: userData.user.id });
-              //Search user with token provided
-              if (!user) {
-                  return res.json({
-                      message: "Can't find user with token provided",
-                      code: "9995",
-                  });
-              }
-              //Check if token match
-              if (user.token !== token) {
-                  return res.json({
-                      message: "Token is invalid",
-                      code: "9998",
-                  });
-              }
-              //Check if user is locked
-              if (user.locked == 1) {
-                  return res.json({
-                      message: "User is locked",
-                      code: "9995",
-                  });
-              }
-              requestData = user.FriendsRequest.map(async friend => {
-                let findFriend = await User.findOne({ _id: friend });
-                return {
-                  id: findFriend.id,
-                  username: findFriend.username,
-                  avatar: findFriend.avatar
-                }
-              })
-              let responseData = {
-                request: requestData,
-                total: user.FriendsRequest.length
-              } 
-              return res.json({
-                  code: "1000",
-                  message: "ok",
-                  data: responseData
-              })
-          }
-
-      });
-  } catch (error) {
-      return res.json({
-          message: "Server error",
-          code: "1001",
-      });
-  }
-})
-
 router.post("/set_devtoken",(req,res) => {
   const { token, devtoken } = req.query;
   try {
@@ -778,8 +717,8 @@ router.post("/set_devtoken",(req,res) => {
   }
 })
 
-router.post("/get_list_friends", (req,res) => {
-  const { token } = req.query;
+router.post("/get_user_friends", (req,res) => {
+  const { token,user_id,index,count } = req.query;
   try {
       //Decode token to get user_id
       jwt.verify(token, "secretToken", async (err, userData) => {
@@ -789,19 +728,17 @@ router.post("/get_list_friends", (req,res) => {
                   code: "9998",
               });
           } else {
-              let user = await User.findOne({ _id: userData.user.id });
-              //Search user with token provided
+              let user;
+              if (user_id){
+                user = await User.findOne({ _id: user_id });
+              }else{
+                user = await User.findOne({ _id: userData.user.id });
+              }
+              //Search user 
               if (!user) {
                   return res.json({
-                      message: "Can't find user with token provided",
+                      message: "Can't find user",
                       code: "9995",
-                  });
-              }
-              //Check if token match
-              if (user.token !== token) {
-                  return res.json({
-                      message: "Token is invalid",
-                      code: "9998",
                   });
               }
               //Check if user is locked
@@ -813,16 +750,23 @@ router.post("/get_list_friends", (req,res) => {
               }
               requestData = await Promise.all(user.ListFriends.map(async friend => {
                 let findFriend = await User.findOne({ _id: friend });
+                let intersection = user.ListFriends.filter(element => findFriend.ListFriends.includes(element));
                 return {
                   id: findFriend._id,
                   username: findFriend.username,
                   avatar: findFriend.avatar,
-                  is_online: findFriend.is_online
+                  same_friends: intersection.length
                 }
               }))
+              requestData.sort(function(a, b) {
+                var textA = a.username.toUpperCase();
+                var textB = b.username.toUpperCase();
+                return (textA < textB) ? -1 : (textA > textB) ? 1 : 0;
+              });
+            
               let responseData = {
-                friends: requestData,
-                total: user.FriendsRequest.length
+                friends: requestData.slice(index,index+count),
+                total: user.ListFriends.length
               } 
               return res.json({
                   code: "1000",
@@ -831,6 +775,69 @@ router.post("/get_list_friends", (req,res) => {
               })
           }
 
+      });
+  } catch (error) {
+      return res.json({
+          message: "Server error",
+          code: "1001",
+      });
+  }
+})
+
+router.post("/get_requested_friends", (req,res) => {
+  console.log('abc')
+  const { token,index,count } = req.query;
+  try {
+      //Decode token to get user_id
+      jwt.verify(token, "secretToken", async (err, userData) => {
+          if (err) {
+              res.json({
+                  message: "Token is invalid",
+                  code: "9998",
+              });
+          } else {
+              let user = await User.findOne({ _id: userData.user.id });
+              //Search user 
+              if (!user) {
+                  return res.json({
+                      message: "Can't find user",
+                      code: "9995",
+                  });
+              }
+              //Check if user is locked
+              if (user.locked == 1) {
+                  return res.json({
+                      message: "User is locked",
+                      code: "9995",
+                  });
+              }
+              requestData = await Promise.all(user.FriendsRequest.map(async friend => {
+                let findFriend = await User.findOne({ _id: friend });
+                let intersection = user.ListFriends.filter(element => findFriend.ListFriends.includes(element));
+                return {
+                  id: findFriend._id,
+                  username: findFriend.username,
+                  avatar: findFriend.avatar,
+                  same_friends: intersection.length
+                }
+              }))
+              requestData.sort(function(a, b) {
+                var textA = a.username.toUpperCase();
+                var textB = b.username.toUpperCase();
+                return (textA < textB) ? -1 : (textA > textB) ? 1 : 0;
+              });
+            
+              let responseData = {
+                list_users: requestData.slice(index,index+count),
+                total: user.FriendsRequest.length
+              } 
+              console.log(requestData);
+              return res.json({
+                  code: "1000",
+                  message: "ok",
+                  data: responseData
+              })
+          }
       });
   } catch (error) {
       return res.json({
