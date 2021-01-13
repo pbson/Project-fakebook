@@ -846,4 +846,65 @@ router.post("/get_requested_friends", (req,res) => {
       });
   }
 })
+
+router.post("/get_list_suggested_friends", (req,res) => {
+  console.log('abc')
+  const { token,index,count } = req.query;
+  try {
+      //Decode token to get user_id
+      jwt.verify(token, "secretToken", async (err, userData) => {
+          if (err) {
+              res.json({
+                  message: "Token is invalid",
+                  code: "9998",
+              });
+          } else {
+              let user = await User.findOne({ _id: userData.user.id });
+              //Search user 
+              if (!user) {
+                  return res.json({
+                      message: "Can't find user",
+                      code: "9995",
+                  });
+              }
+              //Check if user is locked
+              if (user.locked == 1) {
+                  return res.json({
+                      message: "User is locked",
+                      code: "9995",
+                  });
+              }
+
+              let allUser = await User.find({});
+
+              requestData = await Promise.all(allUser.map(async (user) => {
+                let findFriend = await User.findOne({ _id: user });
+                let intersection = user.ListFriends.filter(element => findFriend.ListFriends.includes(element));
+
+                return {
+                  id: user.id,
+                  username: user.username,
+                  avatar: user.avatar,
+                  same_friends: intersection.length
+                }
+              }))
+            
+              let responseData = {
+                list_users: requestData.slice(index,index+count),
+              } 
+              console.log(requestData);
+              return res.json({
+                  code: "1000",
+                  message: "ok",
+                  data: responseData
+              })
+          }
+      });
+  } catch (error) {
+      return res.json({
+          message: "Server error",
+          code: "1001",
+      });
+  }
+})
 module.exports = router;
