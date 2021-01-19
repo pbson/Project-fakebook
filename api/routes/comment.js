@@ -74,7 +74,7 @@ router.post("/set_comment", async (req, res) => {
 
                     //send push notification
                     const deviceToken = await getUserDeviceToken(post.User_id);
-                    newCommentNotification(deviceToken, user.phonenumber, id)
+                    newCommentNotification(deviceToken, user.username, id, user._id)
                 } catch (error) {
                     console.log(error);
                 }

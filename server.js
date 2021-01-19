@@ -33,6 +33,7 @@ const uploadsRouter = require('./api/routes/uploads')
 const chatsocketRouter= require('./api/routes/chatsocket')
 const chatsocketController= require('./controller/chatController')(io)
 const searchRouter= require('./api/routes/search')
+const notificationRouter= require('./api/routes/notification')
 const mongoose = require('mongoose')
 
 mongoose.connect(process.env.DATABASE_URL, {useNewUrlParser: true, useUnifiedTopology: true, useFindAndModify: false, 'useCreateIndex':true})
@@ -48,4 +49,5 @@ app.use('/it4788/comment', commentRouter);
 app.use("/it4788/uploads", uploadsRouter);
 app.use("/it4788/chatsocket", chatsocketRouter);
 app.use("/it4788/search", searchRouter);
+app.use("/it4788/notification", notificationRouter);
 

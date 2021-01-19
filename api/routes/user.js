@@ -554,7 +554,12 @@ router.post("/get_user_info", (req,res) => {
                   code: "9998",
               });
           } else {
-              let user = await User.findOne({ _id: user_id });
+              let user
+              if (user_id){
+                user = await User.findOne({ _id: user_id });
+              }else{
+                user = await User.findOne({ _id: userData.user.id });
+              }
               //Search user with token provided
               if (!user) {
                   return res.json({
