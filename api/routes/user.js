@@ -412,7 +412,7 @@ router.post("/set_request_friend/", (req, res) => {
                       if (token === user.token) {
                               let a = await User.findOne({ _id: user_id })
                           if (a) {
-                              if (user._id === a._id) {
+                              if (user._id.toString() == a._id.toString()) {
                                   return res.json({
                                       code: "1003",
                                       message: "The recipient is the sender"
@@ -431,6 +431,12 @@ router.post("/set_request_friend/", (req, res) => {
                                   } else {
                                       let l1 = user.ListFriends;
                                       let l2 = a.ListFriends;
+                                      if(l1.includes(a._id)){
+                                        return res.json({
+                                          code : "1003",
+                                          messeage : "You are already friends"
+                                        })
+                                      }
                                       let count = 0;
                                       for (let i = 0; i < l1.length; i++) {
                                           for (let j = 0; j < l2.length; j++) {
