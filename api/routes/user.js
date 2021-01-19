@@ -554,19 +554,12 @@ router.post("/get_user_info", (req,res) => {
                   code: "9998",
               });
           } else {
-              let user = await User.findOne({ _id: userData.user.id });
+              let user = await User.findOne({ _id: user_id });
               //Search user with token provided
               if (!user) {
                   return res.json({
-                      message: "Can't find user with token provided",
+                      message: "Can't find user",
                       code: "9995",
-                  });
-              }
-              //Check if token match
-              if (user.token !== token) {
-                  return res.json({
-                      message: "Token is invalid",
-                      code: "9998",
                   });
               }
               //Check if user is locked
@@ -576,7 +569,7 @@ router.post("/get_user_info", (req,res) => {
                       code: "9995",
                   });
               }
-              let userData = {
+              let resData = {
                 id: user._id,
                 username: user.username,
                 created: user.created,
@@ -592,7 +585,7 @@ router.post("/get_user_info", (req,res) => {
               return res.json({
                   code: "1000",
                   message: "ok",
-                  data: userData
+                  data: resData
               })
           }
 
@@ -638,6 +631,19 @@ router.post("/set_user_info",(req,res) => {
                       code: "9995",
                   });
               }
+              if (description.length > 150){
+                return res.json({
+                  code: "1000",
+                  message: "Description too long",
+                })
+              }
+              if (avatar.localeCompare('vnhackers.com')== true || cover_image.localeCompare('vnhackers.com')== true){
+                return res.json({
+                  code: "1000",
+                  message: "url is prohibited",
+                })
+              }
+              }
               let resData = {
                 username: username,
                 description: description,
@@ -657,9 +663,7 @@ router.post("/set_user_info",(req,res) => {
                   message: "ok",
                   data: resData
               })
-          }
-
-      });
+          })
   } catch (error) {
       return res.json({
           message: "Server error",
